@@ -1,0 +1,12 @@
+# Local dev only — not needed at runtime in Apps Script
+node_modules/
+package.json
+package-lock.json
+
+# clasp
+.clasp.json
+.clasprc.json
+
+# OS / editor cruft
+.DS_Store
+*.log
