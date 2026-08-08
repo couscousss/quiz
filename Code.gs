@@ -103,15 +103,18 @@ var QUIZ = [
     q: 'When Lee Kuan Yew instructed Goh Keng Swee to explore separation while avoiding calamity, he gave two specific instructions. Select both.',
     helper: 'Two conditions from Lee Kuan Yew’s briefing to Goh — select both for full credit.',
     options: [
-      'Avoid a racial clash or bloodshed',
+      'Find a way to avoid a racial clash',
       'Complete the review within one month',
-      'Keep the exercise leak-proof, minimum people involved',
+      'Restrict talks to the ‘minimum few’ and be absolutely leak-proof',
       'Report only to the British High Commissioner',
       'Draft a new constitution before informing Lee Kuan Yew',
       'Hold a referendum in Singapore first'
     ],
     multi: true,
-    answer: [0, 2] // 1 + 3
+    // Per the Albatross File exhibition panel ("Evading Calamity"): Lee
+    // instructed Goh to (1) avoid a racial clash and (2) restrict talks to the
+    // "minimum few" and be leak-proof.
+    answer: [0, 2]
   },
   {
     q: 'According to E.W. Barker, Lee Kuan Yew’s 27 May 1965 speech in the Federal Parliament — partly in fluent Malay — was the moment the Tunku and colleagues realized two things. Select both.',
