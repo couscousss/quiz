@@ -33,11 +33,10 @@ var ONE_ATTEMPT_PER_PERSON = true;
 // Secret key for the HOST's live scoreboard. As host, open the scoreboard at:
 //   <your /exec URL>?view=board&key=THIS_VALUE
 // Change it to something only you know so participants can't peek at scores.
-var HOST_KEY = 'changeme-host-key';
+var HOST_KEY = 'trainingteam2026';
 
 // Clusters shown in the start-screen dropdown.
-// PLACEHOLDER — replace these with the department's real cluster names.
-var CLUSTERS = ['Cluster A', 'Cluster B', 'Cluster C', 'Cluster D'];
+var CLUSTERS = ['SCB', 'WOG', 'HQ', 'Air Ops C3', 'Maritime', 'C3 Centex', 'Embedded Teams'];
 
 /* ------------------------------------------------------------------------- */
 
