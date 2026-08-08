@@ -97,7 +97,7 @@ var QUIZ = [
     q: 'Which Singapore ministers were reluctant to sign the Separation Agreement, having been deeply invested in the MSC’s "Malaysian Malaysia" ideal? Select all that apply.',
     options: ['Toh Chin Chye', 'S. Rajaratnam', 'Ong Pang Boon', 'Lim Kim San', 'E.W. Barker', 'Goh Keng Swee'],
     multi: true,
-    answer: [0, 1] // Toh Chin Chye + S. Rajaratnam
+    answer: [0, 1, 2] // Toh Chin Chye + S. Rajaratnam + Ong Pang Boon (added at owner's request)
   },
   {
     q: 'When Tun Razak instructed Goh Keng Swee to explore separation while avoiding calamity, he gave two specific instructions. Select both.',
