@@ -178,6 +178,9 @@ function getQuizData() {
         q: item.q,
         options: item.options,
         multi: !!item.multi,
+        // Number of options to pick (safe to reveal — it's the count, not which
+        // options are correct). Lets the UI say "Select 2 options".
+        pick: item.multi ? item.answer.length : 1,
         helper: item.helper || ''
       };
     })

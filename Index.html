@@ -523,7 +523,7 @@
 
     <main class="stage" id="stage" aria-live="polite"></main>
 
-    <p class="footnote" aria-hidden="true">Singapore · 1963–1965 · Road to Separation</p>
+    <p class="footnote" aria-hidden="true">Road to Separation</p>
   </div>
 
   <canvas id="confetti" aria-hidden="true"></canvas>
@@ -573,9 +573,9 @@
             { index:4, multi:false, helper:'', q:'How many people died in the first race riot of 21 July 1964?', options:['8','13','23','60'] },
             { index:5, multi:false, helper:'', q:'What alliance did Lee Kuan Yew, Toh Chin Chye, and S. Rajaratnam form on 9 May 1965?', options:['The Singapore Alliance','The Malaysian Solidarity Convention (MSC)','The Democratic Action Party','Barisan Sosialis'] },
             { index:6, multi:false, helper:'', q:'What health condition struck Tunku Abdul Rahman while in London in June 1965?', options:['Heart attack','Shingles','Pneumonia','Stroke'] },
-            { index:7, multi:true, helper:'', q:'Which Singapore ministers were reluctant to sign the Separation Agreement? Select all that apply.', options:['Toh Chin Chye','S. Rajaratnam','Ong Pang Boon','Lim Kim San','E.W. Barker','Goh Keng Swee'] },
-            { index:8, multi:true, helper:'Two conditions from Razak’s briefing to Goh — select both for full credit.', q:'When Tun Razak instructed Goh Keng Swee to explore separation, he gave two specific instructions. Select both.', options:['Avoid a racial clash or bloodshed','Complete the review within one month','Keep the exercise leak-proof, minimum people involved','Report only to the British High Commissioner','Draft a new constitution before informing Lee Kuan Yew','Hold a referendum in Singapore first'] },
-            { index:9, multi:true, helper:'Barker’s own words captured two linked realizations — select both for full credit.', q:'According to E.W. Barker, LKY’s 27 May 1965 speech was the moment the Tunku realized two things. Select both.', options:['Time to bring in the British as mediator','Better to have Singapore out of the Federation','Better to have Mr Lee out of Malaysian politics','Time to hold fresh elections','Better to delay Separation until after 1969','Time to reshuffle the cabinet'] }
+            { index:7, multi:true, pick:2, helper:'', q:'Which Singapore ministers were reluctant to sign the Separation Agreement? Select all that apply.', options:['Toh Chin Chye','S. Rajaratnam','Ong Pang Boon','Lim Kim San','E.W. Barker','Goh Keng Swee'] },
+            { index:8, multi:true, pick:2, helper:'Two conditions from Razak’s briefing to Goh — select both for full credit.', q:'When Tun Razak instructed Goh Keng Swee to explore separation, he gave two specific instructions. Select both.', options:['Avoid a racial clash or bloodshed','Complete the review within one month','Keep the exercise leak-proof, minimum people involved','Report only to the British High Commissioner','Draft a new constitution before informing Lee Kuan Yew','Hold a referendum in Singapore first'] },
+            { index:9, multi:true, pick:2, helper:'Barker’s own words captured two linked realizations — select both for full credit.', q:'According to E.W. Barker, LKY’s 27 May 1965 speech was the moment the Tunku realized two things. Select both.', options:['Time to bring in the British as mediator','Better to have Singapore out of the Federation','Better to have Mr Lee out of Malaysian politics','Time to hold fresh elections','Better to delay Separation until after 1969','Time to reshuffle the cabinet'] }
           ]
         });
       }, 900);
@@ -681,8 +681,8 @@
 
     var card = el('div', { class:'card' }, [
       el('p', { class:'kicker', text:'Personnel intake' }),
-      el('h1', { class:'lede', text:'Read the file. Beat the clock.' }),
-      el('p', { class:'dek', text:'Ten questions on Singapore’s road to Separation, 1963–1965. A timer starts the moment you begin, and ties are broken by speed. One attempt each.' }),
+      el('h1', { class:'lede', text:'Read the file. Understand the history. Ace the quiz.' }),
+      el('p', { class:'dek', text:'Ten questions on Singapore’s road to Separation.' }),
       form
     ]);
     render(card);
@@ -733,17 +733,20 @@
     var total = App.data.total;
     var selected = App.answers[App.current] || [];
 
-    // HUD: progress + timer
+    // HUD: progress only (the timer is measured but never shown to players)
     var bar = el('div', { class:'progress' }, [ el('span', { style:'width:'+(((App.current)/total)*100)+'%' }) ]);
-    var timer = el('div', { class:'timer' }, [ el('span',{class:'dot'}), el('span',{id:'timer-val',text:'0.0s'}) ]);
-    var hud = el('div', { class:'hud' }, [ bar, timer ]);
+    var hud = el('div', { class:'hud' }, [ bar ]);
 
     var qcount = el('p', { class:'qcount', text:'Question ' + (App.current+1) + ' of ' + total });
     var qtext = el('h2', { class:'qtext', text:q.q });
 
     var kids = [ hud, qcount, qtext ];
     if (q.helper) kids.push(el('p', { class:'helper', text:q.helper }));
-    if (q.multi) kids.push(el('p', { class:'multi-note', text:'▸ Select all that apply · full credit only' }));
+    if (q.multi) {
+      var pick = q.pick || 2;
+      kids.push(el('p', { class:'multi-note',
+        text:'▸ Select ' + pick + ' option' + (pick === 1 ? '' : 's') + ' · you must get all of them right for the mark' }));
+    }
 
     // Options as a proper radio/checkbox group
     var groupRole = q.multi ? 'group' : 'radiogroup';
@@ -772,8 +775,10 @@
     var backBtn = el('button', { class:'btn ghost', type:'button', onclick: goBack }, ['← Back']);
     if (App.current === 0) backBtn.setAttribute('disabled','');
     var isLast = App.current === total - 1;
-    var nextBtn = el('button', { class:'btn primary grow', type:'button', onclick: goNext },
+    var nextBtn = el('button', { class:'btn primary grow', id:'next-btn', type:'button', onclick: goNext },
       [ isLast ? 'Review answers →' : 'Next →' ]);
+    // Every question must be attempted before moving on.
+    if (selected.length === 0) nextBtn.setAttribute('disabled', '');
 
     var row = el('div', { class:'btn-row' }, [ backBtn, nextBtn ]);
 
@@ -803,6 +808,12 @@
       var input = li.querySelector('input');
       if (input) input.checked = on;
     });
+    // Enable "Next" as soon as the question has an attempt.
+    var nextBtn = document.getElementById('next-btn');
+    if (nextBtn) {
+      if (cur.length > 0) nextBtn.removeAttribute('disabled');
+      else nextBtn.setAttribute('disabled', '');
+    }
   }
 
   function goNext() {
@@ -842,11 +853,10 @@
     var backBtn = el('button', { class:'btn ghost', type:'button', onclick: function(){ App.current = total-1; screenQuestion('back'); } }, ['← Back']);
 
     var card = el('div', { class:'card' }, [
-      el('div', { class:'hud' }, [ el('div',{class:'progress'},[el('span',{style:'width:'+((answered/total)*100)+'%'})]),
-        el('div',{class:'timer'},[el('span',{class:'dot'}),el('span',{id:'timer-val',text:fmtTime(Date.now()-App.startTime)})]) ]),
+      el('div', { class:'hud' }, [ el('div',{class:'progress'},[el('span',{style:'width:'+((answered/total)*100)+'%'})]) ]),
       el('p', { class:'kicker', text:'Final review' }),
       el('h2', { class:'qtext', style:'font-size:var(--step-1);', text: allDone ? 'All ten answered. Ready to file?' : 'Some questions still need an answer.' }),
-      el('p', { class:'dek', style:'margin:8px 0 0;font-size:var(--step--1);', text:'Tap any question to revisit it. The timer is still running.' }),
+      el('p', { class:'dek', style:'margin:8px 0 0;font-size:var(--step--1);', text:'Tap any question to revisit it.' }),
       el('div', { class:'review-list', role:'list' }, items),
       el('div', { class:'btn-row' }, [ backBtn, submitBtn ])
     ]);
@@ -858,7 +868,7 @@
     var card = el('div', { class:'card', style:'text-align:center;padding:44px 20px;' }, [
       el('p', { class:'kicker', style:'justify-content:center;', text:'Filing your report' }),
       el('div', { style:'display:flex;justify-content:center;margin:18px 0 14px;' }, [ el('div',{class:'spinner dark'}) ]),
-      el('p', { class:'dek', style:'margin:0;', text:'Scoring your answers and updating the leaderboard…' })
+      el('p', { class:'dek', style:'margin:0;', text:'Filing your submission…' })
     ]);
     render(card);
   }
@@ -886,37 +896,18 @@
     });
   }
 
-  /* ---- Result ---------------------------------------------------------- */
+  /* ---- Result (simple thank-you — no score/time shown to players) ------ */
   function screenResult(res) {
-    var perfect = res.score === res.total;
-    var counter = el('span', { class:'score-big', id:'score-num', 'aria-hidden':'true' }, ['0']);
-    var scoreLine = el('div', { class:'score-wrap' }, [
-      el('p', { class:'kicker', style:'justify-content:center;', text: perfect ? 'Flawless dossier' : 'Case closed' }),
-      el('div', {}, [ counter, el('span', { class:'score-big of', text:'/'+res.total }) ]),
-      el('span', { class:'sr-only', text:'You scored '+res.score+' out of '+res.total }),
-      el('div', { class:'result-meta' }, [
-        metric(res.timeSec + 's', 'Your time'),
-        res.rank ? metric('#'+res.rank, res.totalPlayers ? ('of '+res.totalPlayers) : 'Current rank') : null
-      ].filter(Boolean))
-    ]);
-
-    var stamp = el('div', { class:'stamp', id:'stamp' }, [ perfect ? '★ PERFECT FILE ★' : 'CASE CLOSED' ]);
-
-    var msg = perfect
-      ? 'Every answer correct — the archivists are impressed.'
-      : (res.score >= res.total*0.7 ? 'Strong work, agent. The file is in order.'
-        : 'The file is closed. Brush up and the story rewards a second read.');
-
-    var card = el('div', { class:'card', style:'text-align:center;' }, [
-      scoreLine,
-      stamp,
-      el('p', { class:'dek', style:'margin:14px auto 0;max-width:34ch;', text: msg })
+    var stamp = el('div', { class:'stamp', id:'stamp' }, [ 'CASE CLOSED' ]);
+    var card = el('div', { class:'card', style:'text-align:center;padding:36px 22px;' }, [
+      el('div', { class:'notice-icon', 'aria-hidden':'true', text:'🗂️' }),
+      el('p', { class:'kicker', style:'justify-content:center;', text:'Submission received' }),
+      el('h2', { class:'qtext', style:'font-size:var(--step-2);margin:6px auto 0;max-width:22ch;',
+        text:'Thank you for your submission, the file is in order.' }),
+      stamp
     ]);
     render(card);
-
-    animateCount(counter, res.score);
-    setTimeout(function(){ stamp.classList.add('show'); }, App.reduceMotion ? 0 : 620);
-    if (perfect && !App.reduceMotion) setTimeout(fireConfetti, 780);
+    setTimeout(function(){ stamp.classList.add('show'); }, App.reduceMotion ? 0 : 400);
   }
 
   function metric(value, key) {
