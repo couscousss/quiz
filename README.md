@@ -14,18 +14,33 @@ question text and options, and all scoring happens in `Code.gs`.
 
 ## What it does
 
-- Start screen collects **Name**, **Number** (kept as text, so leading zeros
-  survive), and **Cluster** (a dropdown filled from the server).
+- Start screen collects **Name**, **Phone number** (kept as text, so leading
+  zeros survive), and **Cluster** (a dropdown filled from the server).
 - 10 questions, **one at a time**, with a progress bar and a live timer. The timer
   starts the moment question 1 appears and stops at submit.
 - Questions 8–10 are **multi-select, full-credit-only** (you must pick every
   correct option and no wrong ones).
 - Server-side scoring out of 10. Ranking is **score (high→low), then time
-  (fast→slow)** so the fastest wins any tie.
-- **One attempt per person** (same Name + Number, case-insensitive).
+  (fast→slow)** so the fastest wins any tie — ideal for awarding top-3 prizes even
+  when several people score 10/10 (most accurate first, then quickest).
+- **One attempt per person** (same Name + Phone, case-insensitive).
 - Every submission appends a row to a **`Results`** sheet.
-- A single **Telegram leaderboard message edits itself** on each submission, with
-  🥇🥈🥉 for the top three and an *"Updated HH:MM:SS"* line.
+- A **live host scoreboard** you can watch during the event (see below).
+- Optionally, a single **Telegram leaderboard message edits itself** on each
+  submission, with 🥇🥈🥉 for the top three and an *"Updated HH:MM:SS"* line.
+
+## Watch scores live during the event (host scoreboard)
+
+As the host, open your `/exec` link with `?view=board&key=YOUR_HOST_KEY` on the end,
+e.g. `https://script.google.com/macros/s/…/exec?view=board&key=changeme-host-key`.
+You'll get a full-screen, auto-refreshing leaderboard (updates every few seconds)
+showing rank, name, cluster, score, and time — great for projecting on a screen.
+
+- Set **`HOST_KEY`** at the top of `Code.gs` to a secret only you know, so
+  participants can't open the scoreboard. Anyone without the exact key sees a
+  "locked" page.
+- The participant quiz link is the plain `/exec` URL (no `?view=board`). Only share
+  *that* one with players.
 
 ---
 
@@ -52,6 +67,7 @@ Edit the clearly-commented settings at the top:
 | `SHEET_NAME` | Tab name for logging. Default `Results` is fine. |
 | `LEADERBOARD_SIZE` | How many people to show on Telegram. Default 10. |
 | `ONE_ATTEMPT_PER_PERSON` | `true` to block repeat submissions. |
+| `HOST_KEY` | A secret word for **your** live scoreboard link. Change it from the default. |
 | `CLUSTERS` | **Replace the placeholder** `['Cluster A', …]` with your real cluster names. |
 
 The quiz works fine **without Telegram** — the bot calls are guarded and simply
@@ -64,6 +80,13 @@ skipped while `BOT_TOKEN`/`CHAT_ID` are still placeholders.
    &lt;your org&gt;"* if it's internal).
 4. **Deploy**, approve the permissions when prompted, and copy the **`/exec` URL**.
    That URL is the link you share with the department.
+
+### 4. (Optional) A friendlier link
+
+Google's `/exec` URL is long and can't be renamed. To hand out a tidy link like
+`tinyurl.com/secc-learningdaytonlb`, paste the `/exec` URL into a free shortener
+(e.g. [TinyURL](https://tinyurl.com) lets you set a custom alias for free) and share
+the short link instead. It just forwards to your quiz.
 
 ---
 

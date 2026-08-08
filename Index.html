@@ -661,10 +661,10 @@
       'aria-describedby':'e-name', maxlength:'60'
     }), 'e-name');
 
-    var numField = field('number', 'Number', el('input', {
-      id:'f-number', type:'text', inputmode:'numeric', autocomplete:'off',
+    var numField = field('number', 'Phone number', el('input', {
+      id:'f-number', type:'tel', inputmode:'tel', autocomplete:'tel',
       value: App.player.number, 'aria-describedby':'e-number', maxlength:'30',
-      placeholder:'e.g. 042'
+      placeholder:'e.g. 9123 4567'
     }), 'e-number');
 
     var clusterField = field('cluster', 'Cluster', el('select', {
@@ -704,7 +704,7 @@
     var cluster = document.getElementById('f-cluster').value;
 
     ok = setFieldError('name', name ? '' : 'Please enter your name.') && ok;
-    ok = setFieldError('number', number ? '' : 'Please enter your number.') && ok;
+    ok = setFieldError('number', number ? '' : 'Please enter your phone number.') && ok;
     ok = setFieldError('cluster', cluster ? '' : 'Please choose your cluster.') && ok;
 
     if (ok) { App.player = { name:name, number:number, cluster:cluster }; }

@@ -27,8 +27,13 @@ var SHEET_NAME = 'Results';
 // How many people to show on the Telegram leaderboard.
 var LEADERBOARD_SIZE = 10;
 
-// Block a second submission from the same Name + Number (case-insensitive)?
+// Block a second submission from the same Name + Phone (case-insensitive)?
 var ONE_ATTEMPT_PER_PERSON = true;
+
+// Secret key for the HOST's live scoreboard. As host, open the scoreboard at:
+//   <your /exec URL>?view=board&key=THIS_VALUE
+// Change it to something only you know so participants can't peek at scores.
+var HOST_KEY = 'changeme-host-key';
 
 // Clusters shown in the start-screen dropdown.
 // PLACEHOLDER — replace these with the department's real cluster names.
@@ -131,8 +136,29 @@ var TOTAL_QUESTIONS = QUIZ.length;
  *  WEB APP ENTRY
  * ======================================================================== */
 
-/** Serve the single-page front end. */
-function doGet() {
+/**
+ * Serve the front end.
+ *  - Default: the participant quiz (Index.html).
+ *  - ?view=board&key=HOST_KEY : the host's live scoreboard.
+ */
+function doGet(e) {
+  var params = (e && e.parameter) ? e.parameter : {};
+
+  if (params.view === 'board') {
+    if (String(params.key || '') !== String(HOST_KEY)) {
+      return HtmlService.createHtmlOutput(
+        '<div style="font-family:system-ui,sans-serif;padding:48px 24px;text-align:center;color:#b3121f;">' +
+        '<h2 style="margin:0 0 8px;">🔒 Scoreboard locked</h2>' +
+        '<p style="color:#5b5443;">Add <code>&amp;key=YOUR_HOST_KEY</code> to the end of the scoreboard link.</p>' +
+        '</div>'
+      ).setTitle('Scoreboard — locked');
+    }
+    return HtmlService.createHtmlOutput(renderHostBoardHtml_())
+      .setTitle('The Albatross Files — Live Scoreboard')
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
+
   return HtmlService.createHtmlOutputFromFile('Index')
     .setTitle('The Albatross Files')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover')
@@ -268,7 +294,7 @@ function isCorrect_(question, selected) {
  *  GOOGLE SHEET
  * ======================================================================== */
 
-var HEADERS = ['Timestamp', 'Name', 'Number', 'Cluster', 'Score', 'Total', 'TimeSec', 'AnswersJSON'];
+var HEADERS = ['Timestamp', 'Name', 'Phone', 'Cluster', 'Score', 'Total', 'TimeSec', 'AnswersJSON'];
 
 /** Get (or create) the Results tab with a frozen header row. */
 function getResultsSheet_() {
@@ -344,7 +370,7 @@ function buildLeaderboard_(sheet) {
   return players;
 }
 
-/** 1-based rank of a Name + Number within the sorted board, or null. */
+/** 1-based rank of a Name + Phone within the sorted board, or null. */
 function findRank_(board, name, number) {
   var wantName = name.trim().toLowerCase();
   var wantNum = normalizeNumber_(number);
@@ -354,6 +380,100 @@ function findRank_(board, name, number) {
     }
   }
   return null;
+}
+
+/* ===========================================================================
+ *  HOST LIVE SCOREBOARD
+ *  Ranked by score (accuracy) DESC, then time ASC (fastest) — so tied top
+ *  scores are broken by who was quickest. Called by the host board page.
+ * ======================================================================== */
+
+/**
+ * Return the ranked leaderboard for the host page. Guarded by HOST_KEY so
+ * participants can't call it to peek at scores.
+ */
+function getLeaderboard(key) {
+  if (String(key || '') !== String(HOST_KEY)) {
+    return { ok: false, error: 'Invalid host key.' };
+  }
+  var board = buildLeaderboard_(getResultsSheet_());
+  return {
+    ok: true,
+    updated: nowHHMMSS_(),
+    count: board.length,
+    players: board.map(function (p, i) {
+      return { rank: i + 1, name: p.name, cluster: p.cluster, score: p.score, timeSec: p.timeSec };
+    })
+  };
+}
+
+/** Self-contained HTML for the host's live scoreboard (auto-refreshing). */
+function renderHostBoardHtml_() {
+  var keyJson = JSON.stringify(String(HOST_KEY));
+  var totalQ = TOTAL_QUESTIONS;
+  return [
+'<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">',
+'<meta name="viewport" content="width=device-width, initial-scale=1">',
+'<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>',
+'<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Fraunces:opsz,wght@9..144,600;9..144,900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">',
+'<style>',
+':root{--paper:#f4ecd8;--paper2:#faf5e6;--ink:#23201a;--soft:#5b5443;--faint:#8a8168;--red:#b3121f;--line:#d8cba8;--gold:#c8a53a;}',
+'*{box-sizing:border-box;}',
+'body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;',
+'background-image:repeating-linear-gradient(0deg,rgba(0,0,0,.012) 0 1px,transparent 1px 3px);}',
+'.wrap{max-width:820px;margin:0 auto;padding:22px 18px 40px;}',
+'.top{display:flex;align-items:center;gap:12px;border:2px solid var(--ink);border-radius:5px;background:var(--paper2);padding:14px 18px;}',
+'.top .k{font-family:"Special Elite",monospace;font-size:.66rem;letter-spacing:.1em;color:var(--soft);}',
+'.top h1{font-family:Fraunces,serif;font-weight:900;font-size:1.5rem;margin:2px 0 0;letter-spacing:-.01em;}',
+'.live{margin-left:auto;font-family:"Special Elite",monospace;font-size:.72rem;letter-spacing:.08em;color:var(--red);display:flex;align-items:center;gap:7px;white-space:nowrap;}',
+'.live .dot{width:9px;height:9px;border-radius:50%;background:var(--red);animation:p 1.6s infinite;}',
+'@keyframes p{0%,100%{opacity:.3;}50%{opacity:1;}}',
+'.meta{font-family:"Special Elite",monospace;font-size:.72rem;letter-spacing:.06em;color:var(--faint);margin:14px 2px 10px;text-transform:uppercase;display:flex;justify-content:space-between;}',
+'table{width:100%;border-collapse:collapse;}',
+'th{font-family:"Special Elite",monospace;font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);text-align:left;padding:6px 10px;border-bottom:1px solid var(--line);}',
+'th.r,td.r{text-align:right;font-variant-numeric:tabular-nums;}',
+'td{padding:12px 10px;border-bottom:1px solid var(--line);font-size:1rem;}',
+'tr td:first-child{font-family:Fraunces,serif;font-weight:900;font-size:1.15rem;width:54px;}',
+'.nm{font-weight:600;}',
+'.cl{color:var(--soft);font-size:.85rem;}',
+'.sc{font-family:Fraunces,serif;font-weight:900;font-size:1.2rem;color:var(--red);}',
+'.tm{color:var(--soft);font-variant-numeric:tabular-nums;}',
+'tr.top1 td{background:color-mix(in srgb,var(--gold) 20%,transparent);}',
+'tr.top2 td{background:color-mix(in srgb,var(--faint) 14%,transparent);}',
+'tr.top3 td{background:color-mix(in srgb,var(--red) 9%,transparent);}',
+'.empty{text-align:center;color:var(--soft);padding:50px 20px;font-family:Fraunces,serif;font-size:1.2rem;}',
+'.err{text-align:center;color:var(--red);padding:40px;}',
+'@media (max-width:520px){.cl{display:block;}td{padding:10px 6px;}}',
+'@media (prefers-color-scheme:dark){:root{--paper:#1c1a16;--paper2:#26231d;--ink:#ece3cf;--soft:#b9ac8f;--faint:#857a5f;--red:#e5434f;--line:#3a3529;}}',
+'</style></head><body><div class="wrap">',
+'<div class="top"><span style="font-size:1.6rem" aria-hidden="true">🕊️</span>',
+'<div><div class="k">HOST VIEW · LIVE</div><h1>The Albatross Files — Scoreboard</h1></div>',
+'<div class="live"><span class="dot"></span><span id="live">connecting…</span></div></div>',
+'<div class="meta"><span id="count">—</span><span>Ranked by score, then fastest time</span></div>',
+'<div id="board"><div class="empty">Loading…</div></div>',
+'</div><script>',
+'var KEY=' + keyJson + ';var TOTAL=' + totalQ + ';',
+'function esc(s){return String(s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];});}',
+'function medal(r){return r===1?"🥇":r===2?"🥈":r===3?"🥉":r;}',
+'function paint(res){',
+'  if(!res||!res.ok){document.getElementById("board").innerHTML="<div class=\\"err\\">Could not load the scoreboard. Check the host key in the link.</div>";return;}',
+'  document.getElementById("live").textContent="Updated "+res.updated;',
+'  document.getElementById("count").textContent=res.count+(res.count===1?" entry":" entries");',
+'  if(!res.players.length){document.getElementById("board").innerHTML="<div class=\\"empty\\">No submissions yet — the board fills as people finish.</div>";return;}',
+'  var h="<table><thead><tr><th>#</th><th>Participant</th><th class=\\"r\\">Score</th><th class=\\"r\\">Time</th></tr></thead><tbody>";',
+'  res.players.forEach(function(p){',
+'    var cls=p.rank<=3?(" class=\\"top"+p.rank+"\\""):"";',
+'    h+="<tr"+cls+"><td>"+medal(p.rank)+"</td>";',
+'    h+="<td><span class=\\"nm\\">"+esc(p.name)+"</span> <span class=\\"cl\\">"+esc(p.cluster)+"</span></td>";',
+'    h+="<td class=\\"r\\"><span class=\\"sc\\">"+p.score+"</span>/"+TOTAL+"</td>";',
+'    h+="<td class=\\"r tm\\">"+p.timeSec+"s</td></tr>";',
+'  });',
+'  h+="</tbody></table>";document.getElementById("board").innerHTML=h;',
+'}',
+'function poll(){google.script.run.withSuccessHandler(paint).withFailureHandler(function(){document.getElementById("live").textContent="reconnecting…";}).getLeaderboard(KEY);}',
+'poll();setInterval(poll,4000);',
+'</script></body></html>'
+  ].join('\n');
 }
 
 /* ===========================================================================
