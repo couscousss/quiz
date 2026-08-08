@@ -54,7 +54,7 @@ var QUIZ = [
     answer: [1] // B
   },
   {
-    q: 'Why did Goh Keng Swee name his secret file "Albatross"?',
+    q: 'Why did Goh Keng Swee name the secret file "Albatross"?',
     options: [
       'A childhood nickname',
       'It referenced Coleridge’s poem — Malaysia had become "an albatross round our necks"',
@@ -94,14 +94,14 @@ var QUIZ = [
     answer: [1] // B (Shingles)
   },
   {
-    q: 'Which Singapore ministers were reluctant to sign the Separation Agreement, having been deeply invested in the MSC’s "Malaysian Malaysia" ideal? Select all that apply.',
+    q: 'Which Singapore ministers were reluctant to sign the Separation Agreement? Select all that apply.',
     options: ['Toh Chin Chye', 'S. Rajaratnam', 'Ong Pang Boon', 'Lim Kim San', 'E.W. Barker', 'Goh Keng Swee'],
     multi: true,
     answer: [0, 1, 2] // Toh Chin Chye + S. Rajaratnam + Ong Pang Boon (added at owner's request)
   },
   {
-    q: 'When Tun Razak instructed Goh Keng Swee to explore separation while avoiding calamity, he gave two specific instructions. Select both.',
-    helper: 'Two conditions from Razak’s briefing to Goh — select both for full credit.',
+    q: 'When Lee Kuan Yew instructed Goh Keng Swee to explore separation while avoiding calamity, he gave two specific instructions. Select both.',
+    helper: 'Two conditions from Lee Kuan Yew’s briefing to Goh — select both for full credit.',
     options: [
       'Avoid a racial clash or bloodshed',
       'Complete the review within one month',
@@ -115,7 +115,6 @@ var QUIZ = [
   },
   {
     q: 'According to E.W. Barker, Lee Kuan Yew’s 27 May 1965 speech in the Federal Parliament — partly in fluent Malay — was the moment the Tunku and colleagues realized two things. Select both.',
-    helper: 'Barker’s own words captured two linked realizations — select both for full credit.',
     options: [
       'Time to bring in the British as mediator',
       'Better to have Singapore out of the Federation',
