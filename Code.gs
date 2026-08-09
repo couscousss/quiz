@@ -629,3 +629,42 @@ function refreshLeaderboardNow() {
   updateTelegramLeaderboard_(board);
   Logger.log('Leaderboard refreshed.');
 }
+
+/**
+ * ONE-TIME SETUP HELPER — find your Telegram group's chat id (no other bots
+ * needed). Steps:
+ *   1) Paste your bot token into BOT_TOKEN at the top of Code.gs and Save.
+ *   2) Add your bot to the target group. (Adding it is enough; if nothing shows
+ *      up, also send a message in the group that mentions the bot, e.g.
+ *      "/id@albatross_quiz_bot".)
+ *   3) Select this function (findChatId) in the toolbar dropdown and click Run.
+ *   4) Open the Execution log (View → Logs, or the panel that appears). It
+ *      prints every chat the bot has seen — copy the negative group id into
+ *      CHAT_ID at the top of Code.gs, then Save.
+ */
+function findChatId() {
+  if (!BOT_TOKEN || BOT_TOKEN.indexOf('PASTE_') === 0) {
+    Logger.log('Set BOT_TOKEN first (top of Code.gs), then run this again.');
+    return;
+  }
+  var res = UrlFetchApp.fetch(TELEGRAM_API + BOT_TOKEN + '/getUpdates', { muteHttpExceptions: true });
+  var data = JSON.parse(res.getContentText());
+  if (!data.ok) {
+    Logger.log('Telegram error — check your BOT_TOKEN. Raw: ' + res.getContentText());
+    return;
+  }
+  if (!data.result || !data.result.length) {
+    Logger.log('No updates yet. In your group: (a) make sure the bot is a member, ' +
+      'and (b) send a message that mentions it, e.g. "/id@your_bot", then run this again.');
+    return;
+  }
+  var seen = {};
+  data.result.forEach(function (u) {
+    var msg = u.message || u.edited_message || u.channel_post || u.my_chat_member || {};
+    if (msg.chat) seen[msg.chat.id] = (msg.chat.title || msg.chat.type || '');
+  });
+  Logger.log('Chats your bot has seen (copy the negative group id into CHAT_ID):');
+  var found = false;
+  for (var id in seen) { Logger.log('   CHAT_ID = ' + id + '   (' + seen[id] + ')'); found = true; }
+  if (!found) Logger.log('No chats found. Send a message mentioning the bot in the group, then run again.');
+}
