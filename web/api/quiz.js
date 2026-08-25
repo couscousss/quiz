@@ -1,7 +1,8 @@
-/** GET /api/quiz — returns quiz data WITHOUT answers. */
-const { getPublicQuiz } = require('../lib/quiz');
+/** GET /api/quiz — Vercel handler. */
+import { handleQuiz } from '../shared/core.js';
 
-module.exports = async (req, res) => {
+export default function handler(req, res) {
+  const { status, body } = handleQuiz();
   res.setHeader('Cache-Control', 'no-store');
-  res.status(200).json(getPublicQuiz());
-};
+  res.status(status).json(body);
+}

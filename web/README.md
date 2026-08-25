@@ -1,75 +1,102 @@
-# The Albatross Files — self-hosted version (Vercel + Supabase)
+# The Albatross Files — self-hosted version
 
 Same quiz as the Google Apps Script version, but hosted off Google — so it has a
-clean URL, no "created by a Google user" notice, no multi-account/incognito
-issues, and it opens in every browser including WhatsApp's in-app browser.
+clean URL, no "created by a Google user" notice, no multi-account or incognito
+problems, and it opens everywhere including WhatsApp's in-app browser.
 
-- **Frontend:** `index.html` (participant quiz) + `board.html` (host scoreboard).
-- **Backend:** serverless functions in `/api` (Vercel).
-- **Database:** Supabase (Postgres) — replaces the Google Sheet.
+Deploys to **Cloudflare Pages** (recommended) or **Vercel**. Data lives in
+**Supabase** (Postgres).
 
-Correct answers live only in `lib/quiz.js` on the server and are never sent to
-the browser. Scoring is full-credit-only for multi-select. Ranking is score
-descending, then time ascending (fastest wins ties).
+| | |
+| --- | --- |
+| `index.html` | participant quiz |
+| `board.html` | host live scoreboard |
+| `functions/api/*` | Cloudflare Pages Functions |
+| `api/*` | Vercel serverless handlers |
+| `shared/*` | the shared core both platforms call (quiz + scoring + DB + Telegram) |
+| `schema.sql` | database tables |
+
+**No npm dependencies** — everything uses plain `fetch`, so builds are fast and
+can't break on install. The answer key lives only in `shared/quiz.js` on the
+server and is never sent to the browser. Multi-select is full-credit-only.
+Ranking is score descending, then time ascending (fastest wins ties).
 
 ---
 
-## Setup (one time)
+## 1. Database — Supabase (~10 min)
 
-### 1. Supabase (the database)
 1. Create a free account at [supabase.com](https://supabase.com) → **New project**.
-   Pick any name/password/region; wait ~2 min for it to provision.
-2. Left sidebar → **SQL Editor** → **New query** → paste the contents of
-   [`schema.sql`](./schema.sql) → **Run**. This creates the `results` and
-   `app_meta` tables.
-3. Left sidebar → **Project Settings → API**. Copy two values (you'll paste them
-   into Vercel next):
-   - **Project URL** → `SUPABASE_URL`
-   - **service_role** secret key → `SUPABASE_SERVICE_ROLE_KEY`
-     *(the `service_role` key, not `anon`. Keep it secret — it's server-only.)*
+   Any name/password/region; wait ~2 min while it provisions.
+2. Sidebar → **SQL Editor** → **New query** → paste all of [`schema.sql`](./schema.sql)
+   → **Run**. "Success. No rows returned" is the expected result.
+3. Sidebar → **Project Settings → API**. You need two values:
+   - **Project URL** → e.g. `https://abcd.supabase.co`
+   - **`service_role`** secret key (reveal it) — *not* the `anon` key.
 
-### 2. Vercel (the hosting)
-1. Create a free account at [vercel.com](https://vercel.com), signing in with GitHub.
-2. **Add New → Project** → import this GitHub repo.
-3. **Set the Root Directory to `web`** (there's a "Root Directory" field on the
-   import screen — click **Edit** and choose the `web` folder). This is important:
-   the app lives in `web/`, not the repo root.
-4. Expand **Environment Variables** and add these:
+> The `service_role` key is a full-access database key. Paste it only into your
+> hosting provider's environment variables. Never commit it or share it.
+
+## 2. Hosting — Cloudflare Pages (~10 min)
+
+1. Sign in at [dash.cloudflare.com](https://dash.cloudflare.com) (free account).
+2. **Compute (Workers & Pages)** → **Create** → **Pages** tab →
+   **Connect to Git** → authorise GitHub → pick this repository.
+3. On the build-settings screen:
+   - **Framework preset:** `None`
+   - **Build command:** *leave empty*
+   - **Build output directory:** `web`
+4. Expand **Environment variables (advanced)** and add:
 
    | Name | Value |
    | --- | --- |
    | `SUPABASE_URL` | your Project URL from step 1 |
-   | `SUPABASE_SERVICE_ROLE_KEY` | your service_role key from step 1 |
-   | `HOST_KEY` | a secret word for your scoreboard (e.g. `trainingteam2026`) |
-   | `TELEGRAM_BOT_TOKEN` | *(optional)* your bot token — omit to disable Telegram |
-   | `TELEGRAM_CHAT_ID` | *(optional)* your group id, e.g. `-1001234567890` |
+   | `SUPABASE_SERVICE_ROLE_KEY` | your `service_role` key |
+   | `HOST_KEY` | a secret word for your scoreboard link |
+   | `TELEGRAM_BOT_TOKEN` | *(optional)* bot token — omit to disable Telegram |
+   | `TELEGRAM_CHAT_ID` | *(optional)* group id, e.g. `-1001234567890` |
    | `TELEGRAM_LEADERBOARD_SIZE` | *(optional)* default 10 |
 
-5. **Deploy.** After ~1 minute you'll get a URL like
-   `https://your-project.vercel.app`.
+5. **Save and Deploy.** You get a URL like `https://your-project.pages.dev`.
 
-### 3. Your links
-- **Participant quiz** (share this): `https://your-project.vercel.app/`
-- **Host scoreboard** (keep private): `https://your-project.vercel.app/board.html?key=YOUR_HOST_KEY`
+> Changing an environment variable later does **not** affect the running site
+> until you redeploy: **Deployments → ⋯ → Retry deployment**.
 
-That participant link works for everyone — no Google sign-in, no account issues,
-no warning screen — in any browser or messaging app.
+### Your two links
+- **Participant quiz** (share this): `https://your-project.pages.dev/`
+- **Host scoreboard** (keep private): `https://your-project.pages.dev/board.html?key=YOUR_HOST_KEY`
+
+### Custom domain (optional)
+Cloudflare Pages → your project → **Custom domains** → **Set up a domain**. If the
+domain is already on Cloudflare, DNS is configured automatically.
+
+## 2b. Hosting — Vercel (alternative)
+
+Import the repo, set **Root Directory** to `web`, add the same environment
+variables, deploy. The handlers in `api/` mirror the Cloudflare ones.
 
 ---
 
 ## Editing the quiz
-- **Questions / answers / clusters:** edit `web/lib/quiz.js`.
-- **Look & feel:** edit `web/index.html` (participant) or `web/board.html` (host).
-- Push to GitHub → Vercel **auto-deploys** in ~1 minute. No manual "publish a new
-  version" step (unlike Apps Script). The live URL updates itself.
+- **Questions, answers, clusters:** `shared/quiz.js`
+- **Participant look & feel:** `index.html` · **Host board:** `board.html`
+
+Push to GitHub → the site rebuilds automatically in about a minute. There is no
+"publish a new version" step (unlike Apps Script).
 
 ## Telegram (optional)
-Set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` in Vercel's environment variables
-(never in the code). To test the connection, open in your browser:
-`https://your-project.vercel.app/api/test-telegram?key=YOUR_HOST_KEY` — it posts a
-"bot is connected" message to your group. On each submission, a single leaderboard
-message updates itself with 🥇🥈🥉 and an "Updated" timestamp.
+Set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` as environment variables (never in
+code), then visit `/api/test-telegram?key=YOUR_HOST_KEY` — it posts a "bot is
+connected" message to the group. After that, each submission updates a single
+self-editing leaderboard message with 🥇🥈🥉 and an "Updated" timestamp.
 
-## Viewing / exporting results
-Supabase → **Table Editor → results** shows every submission and lets you sort or
-export to CSV. Or use the live host scoreboard link above.
+## Viewing and exporting results
+Supabase → **Table Editor → results** lists every submission and exports to CSV.
+Or use the live host scoreboard link above.
+
+## Troubleshooting
+| Symptom | Cause |
+| --- | --- |
+| `404` on the site root | Build output directory isn't `web` |
+| Quiz loads but submitting errors | `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` missing or wrong — set them, then redeploy |
+| Scoreboard says "Check the host key" | `key=` in the URL doesn't match the `HOST_KEY` variable |
+| Telegram silent | Token/chat id unset (by design it's skipped), or the bot isn't in the group |

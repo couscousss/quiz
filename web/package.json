@@ -2,8 +2,9 @@
   "name": "albatross-files-quiz",
   "version": "1.0.0",
   "private": true,
-  "description": "The Albatross Files — department quiz (Vercel + Supabase)",
+  "type": "module",
+  "description": "The Albatross Files — department quiz (Cloudflare Pages / Vercel + Supabase)",
   "dependencies": {
-    "@supabase/supabase-js": "^2.45.0"
+    "playwright": "^1.62.1"
   }
 }

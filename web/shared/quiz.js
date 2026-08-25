@@ -4,9 +4,9 @@
  */
 
 // Clusters shown in the start-screen dropdown.
-const CLUSTERS = ['SCB', 'WOG', 'HQ', 'Air Ops C3', 'Maritime', 'C3 Centex', 'Embedded Teams'];
+export const CLUSTERS = ['SCB', 'WOG', 'HQ', 'Air Ops C3', 'Maritime', 'C3 Centex', 'Embedded Teams'];
 
-const QUIZ = [
+export const QUIZ = [
   {
     q: 'On what date did Singapore merge with Malaya, North Borneo (Sabah), and Sarawak to form the Federation of Malaysia?',
     options: ['31 August 1963', '16 September 1963', '9 August 1965', '21 September 1963'],
@@ -87,10 +87,10 @@ const QUIZ = [
   }
 ];
 
-const TOTAL = QUIZ.length;
+export const TOTAL = QUIZ.length;
 
 /** Public quiz for the browser — question text + options only, NO answers. */
-function getPublicQuiz() {
+export function getPublicQuiz() {
   return {
     clusters: CLUSTERS,
     total: TOTAL,
@@ -109,7 +109,7 @@ function getPublicQuiz() {
 }
 
 /** Full-credit scoring for single- and multi-select questions. */
-function isCorrect(question, selected) {
+export function isCorrect(question, selected) {
   const correct = question.answer || [];
   selected = Array.isArray(selected) ? selected : (selected == null ? [] : [selected]);
   if (selected.length !== correct.length) return false;
@@ -120,11 +120,9 @@ function isCorrect(question, selected) {
 }
 
 /** Score a submission (array of selected-index arrays) out of TOTAL. */
-function scoreSubmission(answers) {
+export function scoreSubmission(answers) {
   answers = Array.isArray(answers) ? answers : [];
   let score = 0;
   QUIZ.forEach(function (q, i) { if (isCorrect(q, answers[i])) score++; });
   return score;
 }
-
-module.exports = { CLUSTERS, QUIZ, TOTAL, getPublicQuiz, isCorrect, scoreSubmission };
