@@ -30,8 +30,13 @@ export function handleQuiz() {
 /** POST /api/submit — score server-side, enforce one attempt, store, notify. */
 export async function handleSubmit(payload, cfg) {
   payload = payload || {};
-  const name = String(payload.name || '').trim();
-  const phone = String(payload.number || '').trim();
+  // Normalise before the duplicate check, otherwise the same person re-typing
+  // "9123 4567" as "91234567" counts as a new entry and gets a second score.
+  // The stored value is normalised too, so the unique index sees one key.
+  const name = String(payload.name || '').trim().replace(/\s+/g, ' ');
+  const rawPhone = String(payload.number || '').trim();
+  const digits = rawPhone.replace(/\D/g, '');
+  const phone = digits || rawPhone.replace(/\s+/g, '');
   const cluster = String(payload.cluster || '').trim();
   const answers = Array.isArray(payload.answers) ? payload.answers : [];
   const timeMs = Number(payload.timeMs) || 0;

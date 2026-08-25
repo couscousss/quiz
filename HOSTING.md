@@ -107,7 +107,10 @@ Or use the live host scoreboard link above.
 ## Checks worth running after deploying
 1. `/` shows the quiz start screen.
 2. `/api/quiz` returns JSON starting `{"clusters":[…` — proves the functions run.
-3. `/shared/quiz.js` returns **404** — proves the answer key is not published.
+3. `/shared/quiz.js` does **not** show JavaScript containing `answer:`.
+   Pages serves the `index.html` fallback for unmatched paths, so the status is
+   `200` and you will see the quiz page — that is fine. What matters is that the
+   answer key is not there. Only files in `public/` are ever published.
 4. `/board.html?key=WRONG` shows the locked message, not scores.
 
 ## Troubleshooting

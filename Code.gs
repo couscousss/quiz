@@ -283,13 +283,22 @@ function isCorrect_(question, selected) {
   var correct = question.answer || [];
   selected = Array.isArray(selected) ? selected : (selected == null ? [] : [selected]);
 
-  if (selected.length !== correct.length) return false;
+  // De-duplicate first: without this, a crafted payload of [0,0,0] would have
+  // the same length as a key of [0,1,2] and every element would be "in" the
+  // key, scoring full marks for one lucky guess repeated.
+  var picked = [];
+  for (var k = 0; k < selected.length; k++) {
+    var v = Number(selected[k]);
+    if (picked.indexOf(v) === -1) picked.push(v);
+  }
 
-  // Compare as sets of numbers (order-independent, no duplicates matter).
+  if (picked.length !== correct.length) return false;
+
+  // Compare as sets of numbers (order-independent).
   var want = {};
   for (var i = 0; i < correct.length; i++) want[Number(correct[i])] = true;
-  for (var j = 0; j < selected.length; j++) {
-    if (!want[Number(selected[j])]) return false;
+  for (var j = 0; j < picked.length; j++) {
+    if (!want[picked[j]]) return false;
   }
   return true;
 }

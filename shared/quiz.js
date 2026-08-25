@@ -112,10 +112,14 @@ export function getPublicQuiz() {
 export function isCorrect(question, selected) {
   const correct = question.answer || [];
   selected = Array.isArray(selected) ? selected : (selected == null ? [] : [selected]);
-  if (selected.length !== correct.length) return false;
+  // De-duplicate first: without this, a crafted payload of [0,0,0] would have
+  // the same length as a key of [0,1,2] and every element would be "in" the
+  // key, scoring full marks for one lucky guess repeated.
+  const picked = Array.from(new Set(selected.map(Number)));
+  if (picked.length !== correct.length) return false;
   const want = {};
   correct.forEach(function (c) { want[Number(c)] = true; });
-  for (const s of selected) { if (!want[Number(s)]) return false; }
+  for (const s of picked) { if (!want[s]) return false; }
   return true;
 }
 

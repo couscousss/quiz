@@ -702,8 +702,11 @@
     if (q.helper) kids.push(el('p', { class:'helper', text:q.helper }));
     if (q.multi) {
       var pick = q.pick || 2;
-      kids.push(el('p', { class:'multi-note',
-        text:'▸ Select ' + pick + ' option' + (pick === 1 ? '' : 's') + ' · you must get all of them right for the mark' }));
+      kids.push(el('p', { class:'multi-note' }, [
+        el('span', { text:'▸ Select ' + pick + ' option' + (pick === 1 ? '' : 's') + ' · you must get all of them right for the mark' }),
+        el('span', { id:'pick-hint', style:'display:block;margin-top:4px;opacity:.85;',
+          text: remainingHint(App.current) })
+      ]));
     }
 
     // Options as a proper radio/checkbox group
@@ -735,8 +738,10 @@
     var isLast = App.current === total - 1;
     var nextBtn = el('button', { class:'btn primary grow', id:'next-btn', type:'button', onclick: goNext },
       [ isLast ? 'Review answers →' : 'Next →' ]);
-    // Every question must be attempted before moving on.
-    if (selected.length === 0) nextBtn.setAttribute('disabled', '');
+    // Every question must be attempted before moving on. Multi-select is
+    // full-credit-only, so require exactly the number of picks asked for —
+    // otherwise people submit a partial answer and silently score zero.
+    if (!isAnswerComplete(App.current)) nextBtn.setAttribute('disabled', '');
 
     var row = el('div', { class:'btn-row' }, [ backBtn, nextBtn ]);
 
@@ -766,12 +771,38 @@
       var input = li.querySelector('input');
       if (input) input.checked = on;
     });
-    // Enable "Next" as soon as the question has an attempt.
+    // Enable "Next" once the question is completely answered.
     var nextBtn = document.getElementById('next-btn');
     if (nextBtn) {
-      if (cur.length > 0) nextBtn.removeAttribute('disabled');
+      if (isAnswerComplete(App.current)) nextBtn.removeAttribute('disabled');
       else nextBtn.setAttribute('disabled', '');
     }
+    var hint = document.getElementById('pick-hint');
+    if (hint) hint.textContent = remainingHint(App.current);
+  }
+
+  /**
+   * A question counts as answered only when it is fully answered: one option
+   * for a single-answer question, and exactly `pick` options for a
+   * multi-select (which is scored full-credit-only).
+   */
+  function isAnswerComplete(i) {
+    var q = App.data.questions[i];
+    var sel = App.answers[i] || [];
+    if (!q) return false;
+    if (!q.multi) return sel.length >= 1;
+    return sel.length === (q.pick || 2);
+  }
+
+  /** Live "n more to pick" nudge under a multi-select question. */
+  function remainingHint(i) {
+    var q = App.data.questions[i];
+    var sel = App.answers[i] || [];
+    if (!q || !q.multi) return '';
+    var need = q.pick || 2;
+    if (sel.length === need) return 'Ready — ' + need + ' selected.';
+    if (sel.length > need) return 'Too many — remove ' + (sel.length - need) + '.';
+    return 'Select ' + (need - sel.length) + ' more.';
   }
 
   function goNext() {
@@ -789,11 +820,11 @@
   /* ---- Review before submit ------------------------------------------- */
   function screenReview() {
     var total = App.data.total;
-    var answered = App.answers.filter(function (a) { return a && a.length; }).length;
+    var answered = App.data.questions.filter(function (q, i) { return isAnswerComplete(i); }).length;
     var allDone = answered === total;
 
     var items = App.data.questions.map(function (q, i) {
-      var done = App.answers[i] && App.answers[i].length;
+      var done = isAnswerComplete(i);
       return el('button', {
         class:'review-item ' + (done?'done':'todo'), type:'button',
         onclick: (function(idx){ return function(){ App.current = idx; screenQuestion('enter'); }; })(i)

@@ -64,7 +64,16 @@ export async function updateLeaderboard(db, cfg) {
       parse_mode: 'Markdown', disable_web_page_preview: true
     });
     if (edited && edited.ok) return;
-    // Edit failed (e.g. the message was deleted) — fall through and send a new one.
+    // Only start a fresh message when the old one is genuinely gone. Any other
+    // failure (rate limiting during a burst of submissions, a transient error)
+    // must NOT fall through, or the group gets spammed with a new leaderboard
+    // per submission at exactly the busiest moment.
+    const why = (edited && edited.description ? String(edited.description) : '').toLowerCase();
+    const messageIsGone = why.indexOf('not found') !== -1 ||
+                          why.indexOf("can't be edited") !== -1 ||
+                          why.indexOf('message to edit') !== -1;
+    // "message is not modified" means the board is already correct — nothing to do.
+    if (!messageIsGone) return;
   }
   const sent = await tg(cfg.botToken, 'sendMessage', {
     chat_id: cfg.chatId, text: text, parse_mode: 'Markdown', disable_web_page_preview: true

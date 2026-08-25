@@ -32,9 +32,12 @@ export function makeDb(supabaseUrl, serviceKey) {
      * authoritative guard against races (see insertResult).
      */
     async personExists(name, phone) {
-      // `%` and `_` are PostgREST ilike wildcards. If a value contains one we
-      // skip the pre-check and let the unique index do the work instead.
-      if (/[%_]/.test(name) || /[%_]/.test(phone)) return false;
+      // `%`, `_` and `*` are all treated as wildcards by PostgREST's ilike
+      // (it rewrites `*` to `%`), and encodeURIComponent leaves `*` alone. If a
+      // value contains one, skip the pre-check — matching loosely could tell a
+      // different person they had already submitted — and let the unique index
+      // do the work instead.
+      if (/[%_*]/.test(name) || /[%_*]/.test(phone)) return false;
       const q = '/results?select=id'
         + '&name=ilike.' + encodeURIComponent(name)
         + '&phone=ilike.' + encodeURIComponent(phone)
@@ -83,13 +86,20 @@ export function makeDb(supabaseUrl, serviceKey) {
     },
 
     async setMeta(key, value) {
-      await req('/app_meta', {
+      // app_meta.key is the primary key, so PostgREST defaults the upsert
+      // conflict target to it and no on_conflict param is needed.
+      const res = await req('/app_meta', {
         method: 'POST',
         headers: Object.assign({}, headers, {
           Prefer: 'resolution=merge-duplicates,return=minimal'
         }),
         body: JSON.stringify({ key: key, value: String(value) })
       });
+      // Surface failures: silently losing the stored message id would make
+      // every later submission post a new Telegram leaderboard.
+      if (!res.ok) {
+        console.error('Supabase setMeta failed (' + res.status + '): ' + (await res.text()));
+      }
     }
   };
 }
