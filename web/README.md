@@ -9,12 +9,12 @@ Deploys to **Cloudflare Pages** (recommended) or **Vercel**. Data lives in
 
 | | |
 | --- | --- |
-| `index.html` | participant quiz |
-| `board.html` | host live scoreboard |
-| `functions/api/*` | Cloudflare Pages Functions |
-| `api/*` | Vercel serverless handlers |
-| `shared/*` | the shared core both platforms call (quiz + scoring + DB + Telegram) |
-| `schema.sql` | database tables |
+| `web/index.html` | participant quiz |
+| `web/board.html` | host live scoreboard |
+| `functions/api/*` | Cloudflare Pages Functions — **at the repo root**, because Cloudflare requires the `functions` directory at the project root and *not* inside the static output directory |
+| `web/api/*` | Vercel serverless handlers |
+| `web/shared/*` | the shared core both platforms call (quiz + scoring + DB + Telegram) |
+| `web/schema.sql` | database tables |
 
 **No npm dependencies** — everything uses plain `fetch`, so builds are fast and
 can't break on install. The answer key lives only in `shared/quiz.js` on the
@@ -45,6 +45,9 @@ Ranking is score descending, then time ascending (fastest wins ties).
    - **Framework preset:** `None`
    - **Build command:** *leave empty*
    - **Build output directory:** `web`
+   - **Root directory:** leave as the default (the repository root). The
+     `functions/` folder must sit at the project root for the `/api/*` routes to
+     exist, which is why it is not inside `web/`.
 4. Expand **Environment variables (advanced)** and add:
 
    | Name | Value |
@@ -97,6 +100,7 @@ Or use the live host scoreboard link above.
 | Symptom | Cause |
 | --- | --- |
 | `404` on the site root | Build output directory isn't `web` |
+| Site loads but `/api/quiz` is `404` | The `functions/` directory isn't at the project root — check that **Root directory** is the repo root, not `web` |
 | Quiz loads but submitting errors | `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` missing or wrong — set them, then redeploy |
 | Scoreboard says "Check the host key" | `key=` in the URL doesn't match the `HOST_KEY` variable |
 | Telegram silent | Token/chat id unset (by design it's skipped), or the bot isn't in the group |

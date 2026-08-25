@@ -1,5 +1,5 @@
 /** POST /api/submit — Cloudflare Pages Function. */
-import { handleSubmit, readConfig } from '../../shared/core.js';
+import { handleSubmit, readConfig } from '../../web/shared/core.js';
 
 export const onRequestPost = async ({ request, env }) => {
   let payload = {};

@@ -1,5 +1,5 @@
 /** GET /api/test-telegram?key=HOST_KEY — Cloudflare Pages Function. */
-import { handleTestTelegram, readConfig } from '../../shared/core.js';
+import { handleTestTelegram, readConfig } from '../../web/shared/core.js';
 
 export const onRequestGet = async ({ request, env }) => {
   const key = new URL(request.url).searchParams.get('key') || '';
