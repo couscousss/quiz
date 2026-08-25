@@ -7,19 +7,29 @@ problems, and it opens everywhere including WhatsApp's in-app browser.
 Deploys to **Cloudflare Pages** (recommended) or **Vercel**. Data lives in
 **Supabase** (Postgres).
 
-| | |
+## Layout — and why it matters
+
+| Path | What it is |
 | --- | --- |
-| `web/index.html` | participant quiz |
-| `web/board.html` | host live scoreboard |
-| `functions/api/*` | Cloudflare Pages Functions — **at the repo root**, because Cloudflare requires the `functions` directory at the project root and *not* inside the static output directory |
-| `web/api/*` | Vercel serverless handlers |
-| `web/shared/*` | the shared core both platforms call (quiz + scoring + DB + Telegram) |
-| `web/schema.sql` | database tables |
+| `public/` | **the only folder published to the web** — just the two pages |
+| `public/index.html` | participant quiz |
+| `public/board.html` | host live scoreboard |
+| `functions/api/*` | Cloudflare Pages Functions (must live at the project root) |
+| `api/*` | Vercel serverless handlers |
+| `shared/*` | quiz content, answer key, scoring, DB and Telegram — **never published** |
+| `schema.sql` | database tables |
+
+> **The answer key must stay out of `public/`.** Every file inside the published
+> directory becomes a public URL, so putting `shared/quiz.js` there would let
+> anyone download all ten answers before taking the quiz. That is why `shared/`,
+> `api/` and `functions/` sit outside `public/`.
+
+This layout is also each platform's own convention: Cloudflare serves `public/`
+and runs `functions/`; Vercel serves `public/` and runs `api/`.
 
 **No npm dependencies** — everything uses plain `fetch`, so builds are fast and
-can't break on install. The answer key lives only in `shared/quiz.js` on the
-server and is never sent to the browser. Multi-select is full-credit-only.
-Ranking is score descending, then time ascending (fastest wins ties).
+cannot break on install. Multi-select is full-credit-only. Ranking is score
+descending, then time ascending (fastest wins ties).
 
 ---
 
@@ -30,7 +40,7 @@ Ranking is score descending, then time ascending (fastest wins ties).
 2. Sidebar → **SQL Editor** → **New query** → paste all of [`schema.sql`](./schema.sql)
    → **Run**. "Success. No rows returned" is the expected result.
 3. Sidebar → **Project Settings → API**. You need two values:
-   - **Project URL** → e.g. `https://abcd.supabase.co`
+   - **Project URL** — e.g. `https://abcd.supabase.co`
    - **`service_role`** secret key (reveal it) — *not* the `anon` key.
 
 > The `service_role` key is a full-access database key. Paste it only into your
@@ -41,13 +51,12 @@ Ranking is score descending, then time ascending (fastest wins ties).
 1. Sign in at [dash.cloudflare.com](https://dash.cloudflare.com) (free account).
 2. **Compute (Workers & Pages)** → **Create** → **Pages** tab →
    **Connect to Git** → authorise GitHub → pick this repository.
-3. On the build-settings screen:
+3. Build settings:
    - **Framework preset:** `None`
    - **Build command:** *leave empty*
-   - **Build output directory:** `web`
-   - **Root directory:** leave as the default (the repository root). The
-     `functions/` folder must sit at the project root for the `/api/*` routes to
-     exist, which is why it is not inside `web/`.
+   - **Build output directory:** `public`
+   - **Root directory:** leave at the default (the repository root), so
+     Cloudflare finds `functions/`.
 4. Expand **Environment variables (advanced)** and add:
 
    | Name | Value |
@@ -69,19 +78,18 @@ Ranking is score descending, then time ascending (fastest wins ties).
 - **Host scoreboard** (keep private): `https://your-project.pages.dev/board.html?key=YOUR_HOST_KEY`
 
 ### Custom domain (optional)
-Cloudflare Pages → your project → **Custom domains** → **Set up a domain**. If the
-domain is already on Cloudflare, DNS is configured automatically.
+Cloudflare Pages → your project → **Custom domains** → **Set up a domain**.
 
 ## 2b. Hosting — Vercel (alternative)
 
-Import the repo, set **Root Directory** to `web`, add the same environment
-variables, deploy. The handlers in `api/` mirror the Cloudflare ones.
+Import the repo with the default root directory and add the same environment
+variables. Vercel serves `public/` and runs `api/` with no extra configuration.
 
 ---
 
 ## Editing the quiz
 - **Questions, answers, clusters:** `shared/quiz.js`
-- **Participant look & feel:** `index.html` · **Host board:** `board.html`
+- **Participant look & feel:** `public/index.html` · **Host board:** `public/board.html`
 
 Push to GitHub → the site rebuilds automatically in about a minute. There is no
 "publish a new version" step (unlike Apps Script).
@@ -90,17 +98,23 @@ Push to GitHub → the site rebuilds automatically in about a minute. There is n
 Set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` as environment variables (never in
 code), then visit `/api/test-telegram?key=YOUR_HOST_KEY` — it posts a "bot is
 connected" message to the group. After that, each submission updates a single
-self-editing leaderboard message with 🥇🥈🥉 and an "Updated" timestamp.
+self-editing leaderboard message with medals and an "Updated" timestamp.
 
 ## Viewing and exporting results
 Supabase → **Table Editor → results** lists every submission and exports to CSV.
 Or use the live host scoreboard link above.
 
+## Checks worth running after deploying
+1. `/` shows the quiz start screen.
+2. `/api/quiz` returns JSON starting `{"clusters":[…` — proves the functions run.
+3. `/shared/quiz.js` returns **404** — proves the answer key is not published.
+4. `/board.html?key=WRONG` shows the locked message, not scores.
+
 ## Troubleshooting
 | Symptom | Cause |
 | --- | --- |
-| `404` on the site root | Build output directory isn't `web` |
-| Site loads but `/api/quiz` is `404` | The `functions/` directory isn't at the project root — check that **Root directory** is the repo root, not `web` |
+| `404` on the site root | Build output directory isn't `public` |
+| Site loads but `/api/quiz` is `404` | **Root directory** was changed — it must stay at the repo root so `functions/` is found |
 | Quiz loads but submitting errors | `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` missing or wrong — set them, then redeploy |
-| Scoreboard says "Check the host key" | `key=` in the URL doesn't match the `HOST_KEY` variable |
-| Telegram silent | Token/chat id unset (by design it's skipped), or the bot isn't in the group |
+| Scoreboard says "Check the host key" | `key=` in the URL doesn't match `HOST_KEY` |
+| Telegram silent | Token/chat id unset (skipped by design), or the bot isn't in the group |

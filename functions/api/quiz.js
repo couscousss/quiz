@@ -1,5 +1,5 @@
 /** GET /api/quiz — Cloudflare Pages Function. */
-import { handleQuiz } from '../../web/shared/core.js';
+import { handleQuiz } from '../../shared/core.js';
 
 export const onRequestGet = async () => {
   const { status, body } = handleQuiz();

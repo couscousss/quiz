@@ -1,5 +1,5 @@
 /** GET /api/leaderboard?key=HOST_KEY — Cloudflare Pages Function. */
-import { handleLeaderboard, readConfig } from '../../web/shared/core.js';
+import { handleLeaderboard, readConfig } from '../../shared/core.js';
 
 export const onRequestGet = async ({ request, env }) => {
   const key = new URL(request.url).searchParams.get('key') || '';
