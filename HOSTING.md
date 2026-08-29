@@ -72,9 +72,9 @@ they stay out of the repository. Redeploy after changing them.
 3. Take the quiz once, then open the scoreboard link — your entry should appear.
    If submitting errors, the D1 binding or the database id is wrong.
 4. `/board.html?key=WRONG` shows the locked message, not scores.
-5. `/shared/quiz.js` does **not** show JavaScript containing `answer:`. Unmatched
-   paths fall back to the quiz page, so a `200` here is expected — what matters
-   is that no answer key is visible.
+5. `/shared/quiz.js` returns **404**, and in no case shows JavaScript containing
+   `answer:`. Only `public/` is served as files; `shared/` is compiled into the
+   Worker, so the answer key has no URL of its own.
 
 ## Editing the quiz
 - **Questions, answers, clusters:** `shared/quiz.js`
