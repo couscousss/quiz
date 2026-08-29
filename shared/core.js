@@ -82,8 +82,19 @@ export async function handleSubmit(payload, cfg) {
 
 /** GET /api/leaderboard?key=… — host-only ranked standings. */
 export async function handleLeaderboard(key, cfg) {
-  if (!cfg.hostKey || String(key || '') !== String(cfg.hostKey)) {
-    return { status: 403, body: { ok: false, error: 'Invalid host key.' } };
+  // Distinguish "not configured" from "wrong key" so the host can tell which
+  // one they are looking at. Neither message reveals the key itself.
+  if (!cfg.hostKey) {
+    return {
+      status: 503,
+      body: { ok: false, error: 'HOST_KEY is not set on the server. Add it in the Worker settings, then reload.' }
+    };
+  }
+  if (String(key || '') !== String(cfg.hostKey)) {
+    return {
+      status: 403,
+      body: { ok: false, error: 'That host key does not match the one set on the server.' }
+    };
   }
   try {
     const db = makeDb(cfg.d1);

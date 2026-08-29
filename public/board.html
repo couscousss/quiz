@@ -55,7 +55,12 @@
     function medal(r){return r===1?"🥇":r===2?"🥈":r===3?"🥉":r;}
     function paint(res){
       var board=document.getElementById('board');
-      if(!res||!res.ok){board.innerHTML='<div class="err">Could not load the scoreboard. Check the host key in the link.</div>';return;}
+      if(!res||!res.ok){
+        var why=(res&&res.error)?res.error:'Could not reach the server.';
+        board.innerHTML='<div class="err">'+esc(why)+'</div>';
+        document.getElementById('live').textContent='not loaded';
+        return;
+      }
       if(res.total) TOTAL=res.total;
       document.getElementById('live').textContent='Updated '+res.updated;
       document.getElementById('count').textContent=res.count+(res.count===1?' entry':' entries');
