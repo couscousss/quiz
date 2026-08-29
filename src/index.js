@@ -11,6 +11,8 @@ import {
   handleQuiz,
   handleSubmit,
   handleLeaderboard,
+  handleResults,
+  handleDelete,
   handleTestTelegram,
   readConfig
 } from '../shared/core.js';
@@ -43,6 +45,16 @@ export default {
 
     if (path === '/api/leaderboard' && request.method === 'GET') {
       return json(await handleLeaderboard(url.searchParams.get('key') || '', cfg));
+    }
+
+    if (path === '/api/results' && request.method === 'GET') {
+      return json(await handleResults(url.searchParams.get('key') || '', cfg));
+    }
+
+    if (path === '/api/delete' && request.method === 'POST') {
+      let payload = {};
+      try { payload = await request.json(); } catch (e) { payload = {}; }
+      return json(await handleDelete(url.searchParams.get('key') || '', payload, cfg));
     }
 
     if (path === '/api/test-telegram' && request.method === 'GET') {

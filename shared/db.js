@@ -54,6 +54,28 @@ export function makeDb(D1) {
       return (r && r.results) || [];
     },
 
+    /** Everything the host needs to manage entries, in prize order. */
+    async listAll() {
+      const r = await D1
+        .prepare('SELECT id, created_at, name, phone, cluster, score, time_ms FROM results ORDER BY score DESC, time_ms ASC')
+        .all();
+      return (r && r.results) || [];
+    },
+
+    /** Delete one entry. Returns the number of rows removed. */
+    async deleteById(id) {
+      const r = await D1.prepare('DELETE FROM results WHERE id = ?1').bind(Number(id)).run();
+      return (r && r.meta && typeof r.meta.changes === 'number') ? r.meta.changes : 1;
+    },
+
+    /** Delete every entry. Returns the number of rows removed. */
+    async deleteAll() {
+      const before = await D1.prepare('SELECT COUNT(*) AS n FROM results').all();
+      const n = (before && before.results && before.results[0]) ? before.results[0].n : 0;
+      await D1.prepare('DELETE FROM results').run();
+      return n;
+    },
+
     /** Small key/value store (used for the Telegram message id). */
     async getMeta(key) {
       const r = await D1.prepare('SELECT value FROM app_meta WHERE key = ?1 LIMIT 1').bind(key).all();

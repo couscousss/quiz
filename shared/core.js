@@ -122,6 +122,78 @@ export async function handleLeaderboard(key, cfg) {
   }
 }
 
+/** Shared host-key gate for the host-only endpoints. */
+function hostGate(key, cfg) {
+  if (!cfg.hostKey) {
+    return { status: 503, body: { ok: false, error: 'HOST_KEY is not set on the server.' } };
+  }
+  if (String(key || '') !== String(cfg.hostKey)) {
+    return { status: 403, body: { ok: false, error: 'That host key does not match the one set on the server.' } };
+  }
+  return null;
+}
+
+/** GET /api/results?key=… — full entries for the host's manage view. */
+export async function handleResults(key, cfg) {
+  const blocked = hostGate(key, cfg);
+  if (blocked) return blocked;
+  try {
+    const db = makeDb(cfg.d1);
+    const rows = await db.listAll();
+    return {
+      status: 200,
+      body: {
+        ok: true,
+        total: TOTAL,
+        updated: sgTimeHHMMSS() + ' SGT',
+        count: rows.length,
+        entries: rows.map(function (r, i) {
+          return {
+            rank: i + 1, id: r.id, name: r.name, phone: r.phone,
+            cluster: r.cluster, score: r.score,
+            timeSec: Math.round(r.time_ms / 100) / 10
+          };
+        })
+      }
+    };
+  } catch (e) {
+    console.error('results failed:', e);
+    return { status: 500, body: { ok: false, error: 'Could not load the entries.' } };
+  }
+}
+
+/**
+ * POST /api/delete?key=… — remove one entry, or all of them.
+ * POST rather than GET so a link preview or prefetch can never delete anything.
+ * Clearing everything additionally requires confirm === 'DELETE'.
+ */
+export async function handleDelete(key, payload, cfg) {
+  const blocked = hostGate(key, cfg);
+  if (blocked) return blocked;
+  payload = payload || {};
+  try {
+    const db = makeDb(cfg.d1);
+
+    if (payload.all === true) {
+      if (String(payload.confirm || '') !== 'DELETE') {
+        return { status: 400, body: { ok: false, error: 'Clearing everything needs confirm: "DELETE".' } };
+      }
+      const removed = await db.deleteAll();
+      return { status: 200, body: { ok: true, removed: removed } };
+    }
+
+    const id = Number(payload.id);
+    if (!id || !isFinite(id)) {
+      return { status: 400, body: { ok: false, error: 'Provide an entry id, or all: true.' } };
+    }
+    const removed = await db.deleteById(id);
+    return { status: 200, body: { ok: true, removed: removed } };
+  } catch (e) {
+    console.error('delete failed:', e);
+    return { status: 500, body: { ok: false, error: 'Could not delete. Please try again.' } };
+  }
+}
+
 /** GET /api/test-telegram?key=… — host-only connectivity check. */
 export async function handleTestTelegram(key, cfg) {
   if (!cfg.hostKey || String(key || '') !== String(cfg.hostKey)) {
