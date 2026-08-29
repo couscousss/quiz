@@ -36,7 +36,7 @@ var ONE_ATTEMPT_PER_PERSON = true;
 var HOST_KEY = 'trainingteam2026';
 
 // Clusters shown in the start-screen dropdown.
-var CLUSTERS = ['SCB', 'WOG', 'HQ', 'Air Ops C3', 'Maritime', 'C3 Centex', 'Embedded Teams'];
+var CLUSTERS = ['Air Ops C3', 'Embedded Teams / C3 CentEx', 'HQ', 'Maritime Ops', 'Smart Camps & Bases', 'WOG Ops C3', 'NSI'];
 
 /* ------------------------------------------------------------------------- */
 

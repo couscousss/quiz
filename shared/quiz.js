@@ -4,7 +4,7 @@
  */
 
 // Clusters shown in the start-screen dropdown.
-export const CLUSTERS = ['SCB', 'WOG', 'HQ', 'Air Ops C3', 'Maritime', 'C3 Centex', 'Embedded Teams'];
+export const CLUSTERS = ['Air Ops C3', 'Embedded Teams / C3 CentEx', 'HQ', 'Maritime Ops', 'Smart Camps & Bases', 'WOG Ops C3', 'NSI'];
 
 export const QUIZ = [
   {
