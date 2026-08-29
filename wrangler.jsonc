@@ -1,0 +1,34 @@
+{
+  // The Albatross Files — Cloudflare Worker configuration.
+  //
+  // SETUP: replace database_id below with your own D1 database id.
+  //   Cloudflare dashboard → Storage & Databases → D1 → albatross
+  //   The "Database ID" is shown on that page. It is not a secret.
+  //
+  // HOST_KEY is deliberately NOT set here — add it in the dashboard under
+  // Settings → Variables and Secrets, so it stays out of the repository.
+
+  "name": "quiz",
+  "main": "src/index.js",
+  "compatibility_date": "2025-03-01",
+
+  // Serves public/index.html and public/board.html. Only this folder is
+  // published; shared/ (which holds the answer key) is bundled into the
+  // Worker instead, never exposed as a file.
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "albatross",
+      "database_id": "PASTE_YOUR_D1_DATABASE_ID_HERE"
+    }
+  ],
+
+  "observability": {
+    "enabled": true
+  }
+}

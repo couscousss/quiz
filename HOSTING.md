@@ -1,108 +1,96 @@
 # The Albatross Files — Cloudflare setup
 
-The quiz runs entirely on **Cloudflare**: Pages hosts the site, Pages Functions
-score the answers, and **D1** (Cloudflare's own database) stores the results.
-One account, no API keys to copy anywhere.
+The quiz runs entirely on **Cloudflare**: a Worker serves the pages and scores
+the answers, and **D1** (Cloudflare's own database) stores the results. One
+account, and the only value you copy anywhere is a database id.
 
-It has none of the Google Apps Script problems: a clean URL, no sign-in, no
-"created by a Google user" notice, no multi-account or incognito issues, and it
-opens everywhere including WhatsApp's in-app browser.
+No Google sign-in, no "created by a Google user" notice, no multi-account or
+incognito problems, and it opens everywhere including WhatsApp's in-app browser.
 
-## Layout — and why it matters
+## Layout
 
 | Path | What it is |
 | --- | --- |
-| `public/` | **the only folder published to the web** |
+| `public/` | **the only folder served as files** |
 | `public/index.html` | participant quiz |
 | `public/board.html` | host live scoreboard |
-| `functions/api/*` | Pages Functions — must sit at the project root, *not* inside `public/` |
-| `shared/*` | quiz content, answer key, scoring, database, Telegram — **never published** |
+| `src/index.js` | the Worker: routes `/api/*`, serves everything else from `public/` |
+| `shared/*` | quiz content, answer key, scoring, database, Telegram — bundled into the Worker, **never served as files** |
 | `schema.sql` | database tables |
+| `wrangler.jsonc` | Worker configuration (assets + D1 binding) |
 
-> **The answer key must stay out of `public/`.** Every file in the published
-> folder becomes a public URL, so putting `shared/quiz.js` there would let anyone
-> download all ten answers before taking the quiz.
+> **The answer key must stay out of `public/`.** Anything in that folder becomes
+> a public URL. `shared/quiz.js` is compiled into the Worker instead, so players
+> cannot download it.
 
 Multi-select questions are full-credit-only. Ranking is score descending, then
-time ascending, so the fastest wins a tie — which is what decides the top three.
+time ascending, so the fastest wins a tie — which decides the top three.
 
 ---
 
-## 1. Create the database (~5 min)
+## 1. Create the database
 
-1. Sign in at [dash.cloudflare.com](https://dash.cloudflare.com).
-2. **Storage & Databases → D1 → Create database.** Name it `albatross` → **Create**.
-3. Open the database → **Console** tab → paste all of [`schema.sql`](./schema.sql)
-   → **Execute**. It creates the `results` and `app_meta` tables.
+1. Dashboard → **Storage & Databases → D1 → Create database**, name it
+   **`albatross`** → **Create**.
+2. Open it → **Console** → paste all of [`schema.sql`](./schema.sql) → **Execute**.
+3. On the database page, copy the **Database ID** (a long id, not a secret).
 
-## 2. Create the site (~5 min)
+## 2. Point the Worker at that database
 
-1. **Compute (Workers & Pages) → Create → Pages tab → Connect to Git.**
-2. Authorise GitHub and pick this repository.
-3. Build settings:
-   - **Framework preset:** `None`
-   - **Build command:** *leave empty*
-   - **Build output directory:** `public`
-   - **Root directory:** leave at the default (the repository root), so
-     Cloudflare finds `functions/`.
-4. **Environment variables** — add:
+Edit [`wrangler.jsonc`](./wrangler.jsonc) and replace
+`PASTE_YOUR_D1_DATABASE_ID_HERE` with the id from step 1, then commit.
 
-   | Name | Value |
-   | --- | --- |
-   | `HOST_KEY` | a secret word for your scoreboard link |
-   | `TELEGRAM_BOT_TOKEN` | *(optional)* bot token — omit to disable Telegram |
-   | `TELEGRAM_CHAT_ID` | *(optional)* group id, e.g. `-1001234567890` |
-   | `TELEGRAM_LEADERBOARD_SIZE` | *(optional)* default 10 |
+## 3. Connect the Worker to GitHub
 
-5. **Save and Deploy.**
+In your Worker → **Settings → Build** → **Connect** to the GitHub repository, and
+set the branch to the one you deploy from. Cloudflare then rebuilds the Worker on
+every push; `wrangler.jsonc` supplies the assets and D1 bindings automatically.
 
-## 3. Connect the database to the site (required)
+## 4. Add the host key
 
-The site cannot save anything until the database is bound to it.
+Worker → **Settings → Variables and Secrets** → add a **Secret**:
 
-1. Your Pages project → **Settings → Bindings** (older dashboards:
-   *Functions → D1 database bindings*) → **Add → D1 database**.
-2. **Variable name:** `DB` (exactly this — the code looks for `env.DB`).
-   **D1 database:** `albatross`. **Save.**
-3. **Deployments → ⋯ → Retry deployment**, so the running site picks it up.
+| Name | Value |
+| --- | --- |
+| `HOST_KEY` | a secret word for your scoreboard link |
+| `TELEGRAM_BOT_TOKEN` | *(optional)* bot token — omit to disable Telegram |
+| `TELEGRAM_CHAT_ID` | *(optional)* group id, e.g. `-1001234567890` |
+| `TELEGRAM_LEADERBOARD_SIZE` | *(optional)* default 10 |
 
-> Any change to bindings or environment variables needs a redeploy before the
-> live site sees it.
+Keep these as dashboard secrets rather than putting them in `wrangler.jsonc`, so
+they stay out of the repository. Redeploy after changing them.
 
 ### Your two links
-- **Participant quiz** (share this): `https://your-project.pages.dev/`
-- **Host scoreboard** (keep private): `https://your-project.pages.dev/board.html?key=YOUR_HOST_KEY`
-
-### Custom domain (optional)
-Pages project → **Custom domains → Set up a domain**.
+- **Participant quiz** (share this): `https://<worker>.workers.dev/`
+- **Host scoreboard** (keep private): `https://<worker>.workers.dev/board.html?key=YOUR_HOST_KEY`
 
 ---
 
 ## Checks worth running after deploying
 1. `/` shows the quiz start screen.
-2. `/api/quiz` returns JSON starting `{"clusters":[…` — proves the Functions run.
+2. `/api/quiz` returns JSON starting `{"clusters":[…` — proves the Worker runs.
 3. Take the quiz once, then open the scoreboard link — your entry should appear.
-   If submitting errors, the `DB` binding is missing or the site needs a redeploy.
+   If submitting errors, the D1 binding or the database id is wrong.
 4. `/board.html?key=WRONG` shows the locked message, not scores.
-5. `/shared/quiz.js` does **not** show JavaScript containing `answer:`. Pages
-   serves the quiz page for unmatched paths, so a `200` here is expected and
-   fine — what matters is that no answer key is visible.
+5. `/shared/quiz.js` does **not** show JavaScript containing `answer:`. Unmatched
+   paths fall back to the quiz page, so a `200` here is expected — what matters
+   is that no answer key is visible.
 
 ## Editing the quiz
 - **Questions, answers, clusters:** `shared/quiz.js`
 - **Participant look & feel:** `public/index.html` · **Host board:** `public/board.html`
 
-Push to GitHub → the site rebuilds automatically in about a minute. There is no
-"publish a new version" step (unlike Apps Script).
+Push to GitHub → the Worker rebuilds automatically. There is no "publish a new
+version" step (unlike Apps Script).
 
 ## Telegram (optional)
-Set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` as environment variables (never in
-code), redeploy, then visit `/api/test-telegram?key=YOUR_HOST_KEY` — it posts a
-"bot is connected" message to the group. After that, each submission updates a
-single self-editing leaderboard message with medals and an "Updated" timestamp.
+Add the token and chat id as secrets, redeploy, then visit
+`/api/test-telegram?key=YOUR_HOST_KEY` — it posts a "bot is connected" message to
+the group. After that, each submission updates a single self-editing leaderboard
+message with medals and an "Updated" timestamp.
 
 ## Viewing and exporting results
-Cloudflare → **D1 → albatross → Console**, and run:
+Cloudflare → **D1 → albatross → Console**:
 
 ```sql
 SELECT name, phone, cluster, score, time_ms
@@ -110,13 +98,12 @@ FROM results
 ORDER BY score DESC, time_ms ASC;
 ```
 
-That is the official prize order: most correct first, fastest breaking ties.
+That is the prize order: most correct first, fastest breaking ties.
 
 ## Troubleshooting
 | Symptom | Cause |
 | --- | --- |
-| `404` on the site root | Build output directory isn't `public` |
-| Site loads but `/api/quiz` is `404` | **Root directory** was changed — it must stay at the repo root so `functions/` is found |
-| "The quiz is not fully set up yet" on submit | The `DB` binding is missing, misnamed, or the site hasn't been redeployed since it was added |
-| Scoreboard says "Check the host key" | `key=` in the URL doesn't match `HOST_KEY` |
+| Error page at the Worker URL | The Worker has no code yet — connect it to GitHub (step 3) |
+| "The quiz is not fully set up yet" on submit | `database_id` in `wrangler.jsonc` is still the placeholder or is wrong |
+| Scoreboard says "Check the host key" | `key=` in the URL doesn't match the `HOST_KEY` secret |
 | Telegram silent | Token/chat id unset (skipped by design), or the bot isn't in the group |
