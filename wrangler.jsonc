@@ -1,12 +1,9 @@
 {
   // The Albatross Files — Cloudflare Worker configuration.
   //
-  // SETUP: replace database_id below with your own D1 database id.
-  //   Cloudflare dashboard → Storage & Databases → D1 → albatross
-  //   The "Database ID" is shown on that page. It is not a secret.
-  //
-  // HOST_KEY is deliberately NOT set here — add it in the dashboard under
-  // Settings → Variables and Secrets, so it stays out of the repository.
+  // HOST_KEY and the Telegram values are deliberately NOT set here. Add them in
+  // the dashboard under Settings → Variables and Secrets, so they stay out of
+  // the repository.
 
   "name": "quiz",
   "main": "src/index.js",
@@ -20,11 +17,13 @@
     "binding": "ASSETS"
   },
 
+  // Cloudflare D1. The database id is not a secret — it only names which
+  // database in this account to use; access still requires account auth.
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "albatross",
-      "database_id": "PASTE_YOUR_D1_DATABASE_ID_HERE"
+      "database_id": "40d2a28f-f67c-44de-98d0-c46317a3ce22"
     }
   ],
 
