@@ -95,8 +95,11 @@ Add the token and chat id as secrets, redeploy, then visit
 the group. After that, each submission updates a single self-editing leaderboard
 message with medals and an "Updated" timestamp.
 
-## Viewing and exporting results
-Cloudflare → **D1 → albatross → Console**:
+## Viewing, exporting and clearing results
+Cloudflare → **D1 → albatross → Console**.
+
+See the standings (this is the prize order — most correct first, fastest
+breaking ties):
 
 ```sql
 SELECT name, phone, cluster, score, time_ms
@@ -104,7 +107,29 @@ FROM results
 ORDER BY score DESC, time_ms ASC;
 ```
 
-That is the prize order: most correct first, fastest breaking ties.
+Clear every entry, e.g. after testing and before the event:
+
+```sql
+DELETE FROM results;
+```
+
+Remove one person (case-insensitive):
+
+```sql
+DELETE FROM results WHERE lower(name) = lower('Their Name');
+```
+
+Remove a single row — list the ids first, then delete the one you want:
+
+```sql
+SELECT id, name, cluster, score FROM results ORDER BY id;
+DELETE FROM results WHERE id = 3;
+```
+
+Deletes are immediate and cannot be undone. Clearing `results` also frees the
+person to take the quiz again, since the one-attempt rule reads that table.
+
+Times shown on the scoreboard are Singapore time (UTC+8).
 
 ## Troubleshooting
 | Symptom | Cause |

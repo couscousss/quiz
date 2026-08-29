@@ -8,6 +8,7 @@
 import { getPublicQuiz, scoreSubmission, TOTAL } from './quiz.js';
 import { makeDb } from './db.js';
 import { updateLeaderboard, testMessage } from './telegram.js';
+import { sgTimeHHMMSS } from './time.js';
 
 /** Normalise env vars from either platform into one shape. */
 export function readConfig(env) {
@@ -110,7 +111,7 @@ export async function handleLeaderboard(key, cfg) {
       body: {
         ok: true,
         total: TOTAL,
-        updated: new Date().toISOString().substr(11, 8) + ' UTC',
+        updated: sgTimeHHMMSS() + ' SGT',
         count: players.length,
         players: players
       }

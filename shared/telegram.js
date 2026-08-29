@@ -4,6 +4,7 @@
  * Every function is a safe no-op when the token/chat id are not configured.
  */
 import { TOTAL } from './quiz.js';
+import { sgTimeHHMMSS } from './time.js';
 
 export function telegramConfigured(cfg) {
   const t = cfg && cfg.botToken;
@@ -25,7 +26,7 @@ function escapeMd(s) {
 }
 
 function hhmmss() {
-  return new Date().toISOString().substr(11, 8);
+  return sgTimeHHMMSS();
 }
 
 function renderText(rows) {
@@ -43,7 +44,7 @@ function renderText(rows) {
   }
   // The "Updated" line guarantees the text always changes, which avoids
   // Telegram's "message is not modified" error on edit.
-  lines.push('', '_Updated ' + hhmmss() + ' UTC_');
+  lines.push('', '_Updated ' + hhmmss() + ' SGT_');
   return lines.join('\n');
 }
 
@@ -90,6 +91,6 @@ export async function testMessage(cfg) {
   }
   return tg(cfg.botToken, 'sendMessage', {
     chat_id: cfg.chatId,
-    text: '✅ The Albatross Files bot is connected. ' + hhmmss() + ' UTC'
+    text: '✅ The Albatross Files bot is connected. ' + hhmmss() + ' SGT'
   });
 }
