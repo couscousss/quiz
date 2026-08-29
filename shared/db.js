@@ -1,51 +1,28 @@
 /**
- * Supabase access over its REST (PostgREST) API using plain `fetch`.
+ * Data access for Cloudflare D1 (SQLite).
  *
- * Deliberately dependency-free so the exact same code runs on Cloudflare
- * Workers/Pages and on Node (Vercel) with no bundling or npm install.
- *
- * The service-role key is server-only — it is read from platform environment
- * variables and never reaches the browser.
+ * D1 is Cloudflare's own database, bound to the Pages project as `env.DB` —
+ * there is no second account, no URL and no API key to copy anywhere.
  */
 
-/** Build a small data-access object bound to one Supabase project. */
-export function makeDb(supabaseUrl, serviceKey) {
-  if (!supabaseUrl || !serviceKey) {
-    throw new Error('Supabase not configured: set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
-  }
-  const base = String(supabaseUrl).replace(/\/+$/, '') + '/rest/v1';
-  const headers = {
-    apikey: serviceKey,
-    Authorization: 'Bearer ' + serviceKey,
-    'Content-Type': 'application/json'
-  };
-
-  async function req(path, init) {
-    const res = await fetch(base + path, Object.assign({ headers }, init || {}));
-    return res;
+/** Wrap a D1 binding in the small interface the rest of the app uses. */
+export function makeDb(D1) {
+  if (!D1) {
+    throw new Error('D1 is not bound. Add a D1 binding named DB to the Pages project.');
   }
 
   return {
     /**
      * Has this Name + Phone already submitted? Case-insensitive.
-     * A friendly pre-check only — the unique index in schema.sql is the
-     * authoritative guard against races (see insertResult).
+     * A friendly pre-check; the unique index is the authoritative guard
+     * against two people submitting at the same instant (see insertResult).
      */
     async personExists(name, phone) {
-      // `%`, `_` and `*` are all treated as wildcards by PostgREST's ilike
-      // (it rewrites `*` to `%`), and encodeURIComponent leaves `*` alone. If a
-      // value contains one, skip the pre-check — matching loosely could tell a
-      // different person they had already submitted — and let the unique index
-      // do the work instead.
-      if (/[%_*]/.test(name) || /[%_*]/.test(phone)) return false;
-      const q = '/results?select=id'
-        + '&name=ilike.' + encodeURIComponent(name)
-        + '&phone=ilike.' + encodeURIComponent(phone)
-        + '&limit=1';
-      const res = await req(q, { method: 'GET' });
-      if (!res.ok) throw new Error('Supabase read failed (' + res.status + '): ' + (await res.text()));
-      const rows = await res.json();
-      return Array.isArray(rows) && rows.length > 0;
+      const r = await D1
+        .prepare('SELECT id FROM results WHERE lower(name) = lower(?1) AND lower(phone) = lower(?2) LIMIT 1')
+        .bind(name, phone)
+        .all();
+      return !!(r && r.results && r.results.length);
     },
 
     /**
@@ -53,52 +30,47 @@ export function makeDb(supabaseUrl, serviceKey) {
      * @return {'ok'|'duplicate'} 'duplicate' when the unique index rejects it.
      */
     async insertResult(row) {
-      const res = await req('/results', {
-        method: 'POST',
-        headers: Object.assign({}, headers, { Prefer: 'return=minimal' }),
-        body: JSON.stringify(row)
-      });
-      if (res.status === 409) return 'duplicate';      // unique-index violation
-      if (!res.ok) {
-        const body = await res.text();
-        if (body.indexOf('23505') !== -1) return 'duplicate';
-        throw new Error('Supabase insert failed (' + res.status + '): ' + body);
+      try {
+        await D1
+          .prepare('INSERT INTO results (name, phone, cluster, score, total, time_ms, answers) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)')
+          .bind(row.name, row.phone, row.cluster, row.score, row.total, row.time_ms, JSON.stringify(row.answers || []))
+          .run();
+        return 'ok';
+      } catch (e) {
+        const msg = String((e && e.message) || e).toUpperCase();
+        if (msg.indexOf('UNIQUE') !== -1 || msg.indexOf('CONSTRAINT') !== -1) return 'duplicate';
+        throw e;
       }
-      return 'ok';
     },
 
     /** Standings: score DESC, then time ASC (fastest wins ties). */
     async listRanked(limit) {
-      let q = '/results?select=name,cluster,score,time_ms'
-        + '&order=score.desc,time_ms.asc';
-      if (limit) q += '&limit=' + Number(limit);
-      const res = await req(q, { method: 'GET' });
-      if (!res.ok) throw new Error('Supabase read failed (' + res.status + '): ' + (await res.text()));
-      return res.json();
+      const sql = 'SELECT name, cluster, score, time_ms FROM results ORDER BY score DESC, time_ms ASC'
+        + (limit ? ' LIMIT ?1' : '');
+      const stmt = limit
+        ? D1.prepare(sql).bind(Number(limit))
+        : D1.prepare(sql);
+      const r = await stmt.all();
+      return (r && r.results) || [];
     },
 
     /** Small key/value store (used for the Telegram message id). */
     async getMeta(key) {
-      const res = await req('/app_meta?select=value&key=eq.' + encodeURIComponent(key) + '&limit=1', { method: 'GET' });
-      if (!res.ok) return null;
-      const rows = await res.json();
-      return rows && rows.length ? rows[0].value : null;
+      const r = await D1.prepare('SELECT value FROM app_meta WHERE key = ?1 LIMIT 1').bind(key).all();
+      const rows = (r && r.results) || [];
+      return rows.length ? rows[0].value : null;
     },
 
     async setMeta(key, value) {
-      // app_meta.key is the primary key, so PostgREST defaults the upsert
-      // conflict target to it and no on_conflict param is needed.
-      const res = await req('/app_meta', {
-        method: 'POST',
-        headers: Object.assign({}, headers, {
-          Prefer: 'resolution=merge-duplicates,return=minimal'
-        }),
-        body: JSON.stringify({ key: key, value: String(value) })
-      });
-      // Surface failures: silently losing the stored message id would make
-      // every later submission post a new Telegram leaderboard.
-      if (!res.ok) {
-        console.error('Supabase setMeta failed (' + res.status + '): ' + (await res.text()));
+      try {
+        await D1
+          .prepare('INSERT INTO app_meta (key, value) VALUES (?1, ?2) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
+          .bind(key, String(value))
+          .run();
+      } catch (e) {
+        // Losing the stored message id would make every later submission post a
+        // brand-new Telegram leaderboard instead of editing the existing one.
+        console.error('setMeta failed:', e);
       }
     }
   };

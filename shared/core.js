@@ -1,9 +1,9 @@
 /**
- * Platform-neutral request logic. Both the Cloudflare Pages Functions and the
- * Vercel handlers call straight into these, so the two deployments can never
- * drift apart. Each returns { status, body }.
+ * Request logic, kept separate from the Cloudflare plumbing so it can be tested
+ * directly. Each handler returns { status, body }.
  *
- * `cfg` is the platform's environment, normalised by readConfig().
+ * `cfg` is the Worker environment, normalised by readConfig(): the D1 binding
+ * plus the host key and optional Telegram settings.
  */
 import { getPublicQuiz, scoreSubmission, TOTAL } from './quiz.js';
 import { makeDb } from './db.js';
@@ -13,8 +13,7 @@ import { updateLeaderboard, testMessage } from './telegram.js';
 export function readConfig(env) {
   env = env || {};
   return {
-    supabaseUrl: env.SUPABASE_URL,
-    serviceKey: env.SUPABASE_SERVICE_ROLE_KEY,
+    d1: env.DB,                       // Cloudflare D1 binding named "DB"
     hostKey: env.HOST_KEY,
     botToken: env.TELEGRAM_BOT_TOKEN,
     chatId: env.TELEGRAM_CHAT_ID,
@@ -47,7 +46,7 @@ export async function handleSubmit(payload, cfg) {
 
   let db;
   try {
-    db = makeDb(cfg.supabaseUrl, cfg.serviceKey);
+    db = makeDb(cfg.d1);
   } catch (e) {
     console.error('config error:', e);
     return { status: 500, body: { ok: false, error: 'The quiz is not fully set up yet. Please tell the organiser.' } };
@@ -87,7 +86,7 @@ export async function handleLeaderboard(key, cfg) {
     return { status: 403, body: { ok: false, error: 'Invalid host key.' } };
   }
   try {
-    const db = makeDb(cfg.supabaseUrl, cfg.serviceKey);
+    const db = makeDb(cfg.d1);
     const rows = await db.listRanked(null);
     const players = (rows || []).map(function (p, i) {
       return {
