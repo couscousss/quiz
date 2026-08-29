@@ -8,7 +8,7 @@
 /** Wrap a D1 binding in the small interface the rest of the app uses. */
 export function makeDb(D1) {
   if (!D1) {
-    throw new Error('D1 is not bound. Add a D1 binding named DB to the Pages project.');
+    throw new Error('D1 is not bound. Check the d1_databases entry named DB in wrangler.jsonc.');
   }
 
   return {

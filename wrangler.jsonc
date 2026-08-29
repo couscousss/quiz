@@ -1,13 +1,23 @@
 {
   // The Albatross Files — Cloudflare Worker configuration.
   //
-  // HOST_KEY and the Telegram values are deliberately NOT set here. Add them in
-  // the dashboard under Settings → Variables and Secrets, so they stay out of
-  // the repository.
+  // HOST_KEY is set here because adding it as a dashboard secret did not stick.
+  // Note the trade-off: this repository is public, so anyone who finds it can
+  // read the scoreboard key. The board exposes names, clusters, scores and
+  // times only — never phone numbers. To take it back out of the repo, set
+  // HOST_KEY as a Worker secret in the dashboard and delete it from "vars".
+  //
+  // Telegram values are deliberately NOT put here — a bot token is a real
+  // secret and belongs in the dashboard.
 
   "name": "quiz",
   "main": "src/index.js",
   "compatibility_date": "2025-03-01",
+
+  // Gates the host scoreboard at /board.html?key=...
+  "vars": {
+    "HOST_KEY": "trainingteam2026"
+  },
 
   // Serves public/index.html and public/board.html. Only this folder is
   // published; shared/ (which holds the answer key) is bundled into the

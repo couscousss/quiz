@@ -46,13 +46,19 @@ In your Worker → **Settings → Build** → **Connect** to the GitHub reposito
 set the branch to the one you deploy from. Cloudflare then rebuilds the Worker on
 every push; `wrangler.jsonc` supplies the assets and D1 bindings automatically.
 
-## 4. Add the host key
+## 4. The host key
 
-Worker → **Settings → Variables and Secrets** → add a **Secret**:
+`HOST_KEY` is set in `wrangler.jsonc` under `vars`, because adding it as a
+dashboard secret did not persist. Trade-off: this repository is public, so the
+scoreboard key is readable by anyone who finds it. The board shows names,
+clusters, scores and times only — never phone numbers. To move it back out of
+the repo, add `HOST_KEY` as a Worker secret and delete it from `vars`.
+
+Telegram values are real secrets and belong in the dashboard
+(Worker → **Settings → Variables and Secrets**):
 
 | Name | Value |
 | --- | --- |
-| `HOST_KEY` | a secret word for your scoreboard link |
 | `TELEGRAM_BOT_TOKEN` | *(optional)* bot token — omit to disable Telegram |
 | `TELEGRAM_CHAT_ID` | *(optional)* group id, e.g. `-1001234567890` |
 | `TELEGRAM_LEADERBOARD_SIZE` | *(optional)* default 10 |
