@@ -28,7 +28,7 @@ export const QUIZ = [
     answer: [2] // C (37)
   },
   {
-    q: 'Which PAP candidate won the only seat the party secured in the 1964 Malaysian federal election, and remained in KL’s Parliament even after Separation?',
+    q: 'Which PAP candidate won the only seat the party secured in the 1964 Malaysian Federal Election, and remained in KL’s Parliament even after Separation?',
     options: ['Lim Kim San', 'Devan Nair', 'Ong Pang Boon', 'Toh Chin Chye'],
     answer: [1] // B (Devan Nair)
   },
@@ -73,7 +73,7 @@ export const QUIZ = [
     answer: [0, 2] // avoid racial clash + minimum-few/leak-proof (per Albatross File exhibit)
   },
   {
-    q: 'According to E.W. Barker, Lee Kuan Yew’s 27 May 1965 speech in the Federal Parliament — partly in fluent Malay — was the moment the Tunku and colleagues realized two things. Select both.',
+    q: 'According to E.W. Barker, Lee Kuan Yew’s 27 May 1965 speech in the Federal Parliament — partly in fluent Malay — was the moment Tunku Abdul Rahman and his colleagues realized two things. Select both.',
     options: [
       'Time to bring in the British as mediator',
       'Better to have Singapore out of the Federation',
