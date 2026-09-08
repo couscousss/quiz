@@ -1,174 +1,210 @@
-# The Albatross Files — department quiz
+# The Albatross Files — event runbook
 
-A polished, mobile-first web quiz about Singapore's 1963–1965 road to Separation
-from Malaysia (Goh Keng Swee's secret *"Albatross"* file). Built on **Google Apps
-Script**: free, serverless, and it keeps your Telegram bot token secret on the
-server. Correct answers **never** leave the server — the browser only receives
-question text and options, and all scoring happens in `Code.gs`.
+Everything needed to run the quiz on the day. This file is the record: no other
+notes are required.
 
-- **`Code.gs`** — server: serves the page, returns quiz data (no answers), scores
-  submissions, logs to a Google Sheet, and maintains a live Telegram leaderboard.
-- **`Index.html`** — the front end (single file: inline CSS + JS, Google Fonts).
+A department quiz on Singapore's road to Separation, 1963–1965 (Goh Keng Swee's
+secret "Albatross" file). Runs entirely on Cloudflare.
 
 ---
 
-## What it does
+## ⚠️ Make this repository private
 
-- Start screen collects **Name**, **Phone number** (kept as text, so leading
-  zeros survive), and **Cluster** (a dropdown filled from the server).
-- 10 questions, **one at a time**, with a progress bar and a live timer. The timer
-  starts the moment question 1 appears and stops at submit.
-- Questions 8–10 are **multi-select, full-credit-only** (you must pick every
-  correct option and no wrong ones).
-- Server-side scoring out of 10. Ranking is **score (high→low), then time
-  (fast→slow)** so the fastest wins any tie — ideal for awarding top-3 prizes even
-  when several people score 10/10 (most accurate first, then quickest).
-- **One attempt per person** (same Name + Phone, case-insensitive).
-- Every submission appends a row to a **`Results`** sheet.
-- A **live host scoreboard** you can watch during the event (see below).
-- Optionally, a single **Telegram leaderboard message edits itself** on each
-  submission, with 🥇🥈🥉 for the top three and an *"Updated HH:MM:SS"* line.
+This repo contains **the answer key** (below and in `shared/quiz.js`) and **the
+scoreboard password** (`wrangler.jsonc`). While it is public, anyone who finds it
+can read the answers and open the scoreboard.
 
-## Watch scores live during the event (host scoreboard)
-
-As the host, open your `/exec` link with `?view=board&key=YOUR_HOST_KEY` on the end,
-e.g. `https://script.google.com/macros/s/…/exec?view=board&key=changeme-host-key`.
-You'll get a full-screen, auto-refreshing leaderboard (updates every few seconds)
-showing rank, name, cluster, score, and time — great for projecting on a screen.
-
-- Set **`HOST_KEY`** at the top of `Code.gs` to a secret only you know, so
-  participants can't open the scoreboard. Anyone without the exact key sees a
-  "locked" page.
-- The participant quiz link is the plain `/exec` URL (no `?view=board`). Only share
-  *that* one with players.
+GitHub → **Settings → Danger Zone → Change repository visibility → Make private**.
+Cloudflare keeps deploying normally afterwards.
 
 ---
 
-## Setup (non-technical, ~15 minutes)
+## The links
 
-### 1. Create the Sheet-bound script
-1. Create a new **Google Sheet** (this is where results are logged).
-2. In the Sheet, go to **Extensions → Apps Script**. This opens a script that is
-   *bound* to your Sheet.
-3. In the editor, you'll see a file called `Code.gs`. Replace its entire contents
-   with this project's **`Code.gs`**.
-4. Click the **+** next to *Files* → **HTML**, name it exactly **`Index`** (no
-   `.html`), and paste in this project's **`Index.html`**.
-
-> The HTML file **must** be named `Index` — `Code.gs` serves it by that name.
-
-### 2. Fill in the settings block (top of `Code.gs`)
-Edit the clearly-commented settings at the top:
-
-| Setting | What to put |
+| | |
 | --- | --- |
-| `BOT_TOKEN` | Your Telegram bot token from **@BotFather** (leave the placeholder to disable Telegram). |
-| `CHAT_ID` | The target chat/group id (leave the placeholder to disable Telegram). |
-| `SHEET_NAME` | Tab name for logging. Default `Results` is fine. |
-| `LEADERBOARD_SIZE` | How many people to show on Telegram. Default 10. |
-| `ONE_ATTEMPT_PER_PERSON` | `true` to block repeat submissions. |
-| `HOST_KEY` | A secret word for **your** live scoreboard link. Change it from the default. |
-| `CLUSTERS` | **Replace the placeholder** `['Cluster A', …]` with your real cluster names. |
+| **Quiz** — share this | https://quiz.secc.workers.dev/ |
+| **Host scoreboard** — keep private | https://quiz.secc.workers.dev/board.html?key=trainingteam2026 |
 
-The quiz works fine **without Telegram** — the bot calls are guarded and simply
-skipped while `BOT_TOKEN`/`CHAT_ID` are still placeholders.
+The quiz link needs no sign-in and works in WhatsApp, on any phone, with no
+Google account. The scoreboard is protected only by that key in the URL, so do
+not paste it into the participant group.
 
-### 3. Deploy as a Web app
-1. **Deploy → New deployment**.
-2. Click the gear → choose **Web app**.
-3. Set **Execute as: Me**, and **Who has access: Anyone** (or *"Anyone within
-   &lt;your org&gt;"* if it's internal).
-4. **Deploy**, approve the permissions when prompted, and copy the **`/exec` URL**.
-   That URL is the link you share with the department.
+## How scoring and ranking work
 
-### 4. (Optional) A friendlier link
+- 10 questions. Every question must be answered before moving on.
+- Q8–Q10 are multi-select and **full credit only** — every correct option and no
+  others. The quiz will not let anyone continue until they have picked exactly
+  the required number.
+- **Ranking: score first, then fastest time.** That is the prize order, so three
+  people on 10/10 still produce a clean 1st, 2nd and 3rd.
+- **One attempt per person**, matched on name + phone. Phone numbers are
+  normalised, so "9123 4567" and "91234567" are the same person.
+- Participants never see their score or a timer — only a thank-you message. The
+  clock runs invisibly for the tie-break.
 
-Google's `/exec` URL is long and can't be renamed. To hand out a tidy link like
-`tinyurl.com/secc-learningdaytonlb`, paste the `/exec` URL into a free shortener
-(e.g. [TinyURL](https://tinyurl.com) lets you set a custom alias for free) and share
-the short link instead. It just forwards to your quiz.
+## On the day
 
----
+1. **Before starting:** open the scoreboard → **Manage entries** → **Clear all
+   entries**, to remove test runs.
+2. **Share the quiz link** (see the WhatsApp message below).
+3. **Watch the scoreboard** — it refreshes itself every few seconds. Times shown
+   are Singapore time.
+4. **Read the winners off the top of the board:** 🥇 🥈 🥉.
 
-## ⚠️ The #1 gotcha — publish a *New version* after every edit
+### Managing entries
+On the scoreboard, **Manage entries** shows every submission with phone numbers,
+a **Delete** button per row, and **Clear all entries**.
 
-Apps Script keeps serving the **old** deployed version until you publish a new one.
-So after **any** change to `Code.gs` or `Index.html`:
+Deleting someone's entry **lets them take the quiz again** — useful if a person
+hits a genuine problem partway through.
 
-> **Deploy → Manage deployments → (edit, the pencil icon) → Version: "New version"
-> → Deploy.**
+### WhatsApp message
 
-If you skip this, your `/exec` link keeps showing the previous version and you'll
-think your change "didn't work."
-
----
-
-## Telegram leaderboard (optional but nice)
-
-1. In Telegram, message **@BotFather**, create a bot, and copy the **token** into
-   `BOT_TOKEN`.
-2. Add your bot to the target **group**, then get the group's **chat id** (e.g. use
-   **@RawDataBot** or **@getidsbot** in the group). Group ids are usually negative,
-   like `-1001234567890`. Put it in `CHAT_ID`.
-3. In the Apps Script editor, select the **`testTelegram`** function from the
-   dropdown and click **Run**. On the first run you'll be asked to approve
-   permissions — approve them. You should see a "✅ …bot is connected" message land
-   in the group. This confirms the bot can post before you go live.
-
-Helper functions you can run from the editor:
-
-- **`testTelegram()`** — posts a one-off test message.
-- **`resetLeaderboardMessage()`** — forgets the stored message id so the next
-  submission posts a brand-new leaderboard message (use this if you deleted the old
-  message or moved the bot to a different chat).
-- **`refreshLeaderboardNow()`** — rebuilds and re-posts the leaderboard from the
-  current sheet without waiting for a new submission.
-
-The leaderboard is a **single message that edits itself**: the first submission
-sends it and stores its `message_id` in Script Properties; later submissions edit
-that same message. If the message was deleted, the next update sends a fresh one and
-stores the new id. Every update includes an *"Updated HH:MM:SS"* line so the text
-always changes (Telegram rejects an edit that would leave the text identical).
+> 🕊️ **THE ALBATROSS FILES** — 10 questions on Singapore's road to Separation.
+>
+> Accuracy *and* speed count — ties go to the fastest. Prizes for the top 3.
+> One attempt each.
+>
+> 👉 https://quiz.secc.workers.dev/
+>
+> Gather back at **Level 1 Plaza by 11.30am**.
 
 ---
 
-## Local design preview (optional, for developers)
+## Answer key
 
-`google.script.run` only exists inside Apps Script, so `Index.html` can't reach the
-real backend on your machine. The front end detects this and falls back to a small
-**`MOCK`** object that returns the quiz data and fakes a submission — purely for
-iterating on the visuals. Just open `Index.html` in a browser (or serve the folder
-with any static server) and the mock kicks in automatically.
+Kept in step with `shared/quiz.js`, which is what the server actually scores
+against. Correct options are marked ✅.
 
-- To preview the **"already submitted"** state locally, enter the name `dupe` on the
-  start screen.
-- In production (inside Apps Script) the real backend is always used; the mock is
-  never on the live path.
+### Q1
+*On what date did Singapore merge with Malaya, North Borneo (Sabah), and Sarawak to form the Federation of Malaysia?*
 
-### Optional: `clasp` workflow
+- A) 31 August 1963
+- **✅ B) 16 September 1963**
+- C) 9 August 1965
+- D) 21 September 1963
 
-Prefer editing locally in your own editor?
+### Q2
+*Why did Goh Keng Swee name the secret file "Albatross"?*
 
-```bash
-npm i -g @google/clasp
-clasp login
-# Enable the Apps Script API once at https://script.google.com/home/usersettings
-clasp clone <scriptId>   # the id from the bound project's URL
-# …edit Code.gs / Index.html locally…
-clasp push
-```
+- A) A childhood nickname
+- **✅ B) It referenced Coleridge’s poem — Malaysia had become "an albatross round our necks"**
+- C) A random British-intelligence codename
+- D) A bird species found in Singapore
 
-Then still do the **Deploy → New version** step above to publish. (`clasp` is only
-for your local workflow; the runtime needs no npm packages.)
+### Q3
+*In the Singapore General Election of 21 September 1963, how many of the 51 seats did the PAP win?*
+
+- A) 13
+- B) 0
+- **✅ C) 37**
+- D) 51
+
+### Q4
+*Which PAP candidate won the only seat the party secured in the 1964 Malaysian Federal Election, and remained in KL’s Parliament even after Separation?*
+
+- A) Lim Kim San
+- **✅ B) Devan Nair**
+- C) Ong Pang Boon
+- D) Toh Chin Chye
+
+### Q5
+*How many people died in the first race riot of 21 July 1964?*
+
+- A) 8
+- B) 13
+- **✅ C) 23**
+- D) 60
+
+### Q6
+*What alliance did Lee Kuan Yew, Toh Chin Chye, and S. Rajaratnam form on 9 May 1965, championing "Malaysian Malaysia"?*
+
+- A) The Singapore Alliance
+- **✅ B) The Malaysian Solidarity Convention (MSC)**
+- C) The Democratic Action Party
+- D) Barisan Sosialis
+
+### Q7
+*What health condition struck Tunku Abdul Rahman while in London in June 1965, during which he decided to cut Singapore loose?*
+
+- A) Heart attack
+- **✅ B) Shingles**
+- C) Pneumonia
+- D) Stroke
+
+### Q8  — select 3
+*Which Singapore ministers were reluctant to sign the Separation Agreement? Select all that apply.*
+
+- **✅ Toh Chin Chye**
+- **✅ S. Rajaratnam**
+- **✅ Ong Pang Boon**
+- Lim Kim San
+- E.W. Barker
+- Goh Keng Swee
+
+### Q9  — select 2
+*When Lee Kuan Yew instructed Goh Keng Swee to explore separation while avoiding calamity, he gave two specific instructions. Select both.*
+
+> Two conditions from Lee Kuan Yew’s briefing to Goh — select both for full credit.
+
+- **✅ Find a way to avoid a racial clash**
+- Complete the review within one month
+- **✅ Restrict talks to the ‘minimum few’ and be absolutely leak-proof**
+- Report only to the British High Commissioner
+- Draft a new constitution before informing Lee Kuan Yew
+- Hold a referendum in Singapore first
+
+### Q10  — select 2
+*According to E.W. Barker, Lee Kuan Yew’s 27 May 1965 speech in the Federal Parliament — partly in fluent Malay — was the moment Tunku Abdul Rahman and his colleagues realized two things. Select both.*
+
+- Time to bring in the British as mediator
+- **✅ Better to have Singapore out of the Federation**
+- **✅ Better to have Mr Lee out of Malaysian politics**
+- Time to hold fresh elections across Malaysia
+- Better to delay Separation until after 1969
+- Time to reshuffle the Malaysian cabinet
+
 
 ---
 
-## Answer-key note for the quiz owner
+## Clusters in the dropdown
 
-**Please confirm Q5** ("How many people died in the first race riot of 21 July
-1964?"). The code uses **23**, which is the figure most commonly cited, but it is
-flagged with a `CONFIRM WITH OWNER` comment in `Code.gs`. If your source says
-otherwise, update the `answer` index for question 5.
+Air Ops C3 · Embedded Teams / C3 CentEx · HQ · Maritime Ops ·
+Smart Camps & Bases · WOG Ops C3 · NSI
 
-The results tab logs: `Timestamp | Name | Number | Cluster | Score | Total |
-TimeSec | AnswersJSON`, with a frozen header row created automatically on first use.
+## If something goes wrong
+
+| Symptom | What to do |
+| --- | --- |
+| Quiz page won't load | Check the Worker is deployed: Cloudflare → Workers & Pages → `quiz` → Deployments |
+| "The quiz is not fully set up yet" on submit | The D1 binding or `database_id` in `wrangler.jsonc` is wrong |
+| Scoreboard says the host key doesn't match | The `?key=` in the URL differs from `HOST_KEY` in `wrangler.jsonc` |
+| Someone can't submit — "already filed" | They already have an entry; delete it from Manage entries and they can retake |
+| A change isn't showing | Push to GitHub and wait ~1 minute; the Worker rebuilds itself |
+
+## Saved versions
+
+| Branch | What it is |
+| --- | --- |
+| `v1` | First fully working version on Cloudflare |
+| `v2` | Adds Singapore time, the real cluster names, and the manage-entries panel |
+| `v3` | This version — final wording of Q4 and Q10, plus this runbook |
+
+To roll back, deploy from the branch you want, or use Cloudflare → Workers &
+Pages → `quiz` → **Deployments** and revert to an earlier one.
+
+## How it is built
+
+See [`HOSTING.md`](./HOSTING.md) for the full technical setup: Worker, D1
+database, bindings, environment variables and optional Telegram leaderboard.
+
+| Path | What it is |
+| --- | --- |
+| `public/` | the only folder served as files — the quiz and the scoreboard |
+| `src/index.js` | the Worker: routes `/api/*`, serves everything else |
+| `shared/quiz.js` | questions **and the answer key** — bundled into the Worker, never served |
+| `shared/core.js` | scoring, one-attempt rule, host-key gate |
+| `wrangler.jsonc` | Worker config: static assets, D1 binding, `HOST_KEY` |
+| `schema.sql` | database tables |
+| `Code.gs`, `Index.html` | the older Google Apps Script version, kept for reference only — not in use |
