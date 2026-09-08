@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>The Albatross Files</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* =====================================================================
+       THE ALBATROSS FILES — declassified dossier
+       Palette: manila paper + ink, single Singapore-red accent.
+       ===================================================================== */
+    :root {
+      --paper:      #f4ecd8;   /* manila */
+      --paper-2:    #faf5e6;   /* lighter card surface */
+      --paper-edge: #e6dabc;
+      --ink:        #23201a;   /* near-black ink */
+      --ink-soft:   #5b5443;
+      --ink-faint:  #8a8168;
+      --red:        #b3121f;   /* Singapore red accent */
+      --red-deep:   #8a0d17;
+      --green:      #2f6b3f;
+      --line:       #d8cba8;
+      --rule:       #cdbf9c;
+      --shadow:     rgba(35, 32, 26, 0.18);
+      --radius:     4px;
+      --tap:        48px;
+
+      --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+      --font-stamp:   'Special Elite', 'Courier New', monospace;
+      --font-body:    'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+      --step--1: clamp(0.78rem, 0.74rem + 0.2vw, 0.86rem);
+      --step-0:  clamp(1rem, 0.96rem + 0.25vw, 1.08rem);
+      --step-1:  clamp(1.2rem, 1.1rem + 0.5vw, 1.4rem);
+      --step-2:  clamp(1.5rem, 1.3rem + 1vw, 1.95rem);
+      --step-3:  clamp(2rem, 1.6rem + 2vw, 3rem);
+      --step-4:  clamp(2.6rem, 2rem + 3vw, 4.2rem);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper:      #1c1a16;
+        --paper-2:    #26231d;
+        --paper-edge: #322e26;
+        --ink:        #ece3cf;
+        --ink-soft:   #b9ac8f;
+        --ink-faint:  #857a5f;
+        --red:        #e5434f;
+        --red-deep:   #c02733;
+        --green:      #6fce8a;
+        --line:       #3a3529;
+        --rule:       #423c2f;
+        --shadow:     rgba(0, 0, 0, 0.5);
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      font-family: var(--font-body);
+      font-size: var(--step-0);
+      line-height: 1.55;
+      color: var(--ink);
+      background-color: var(--paper);
+      /* faint paper fibre texture, pure CSS */
+      background-image:
+        radial-gradient(circle at 15% 20%, rgba(0,0,0,0.025) 0, transparent 40%),
+        radial-gradient(circle at 85% 75%, rgba(0,0,0,0.03) 0, transparent 45%),
+        repeating-linear-gradient(0deg, rgba(0,0,0,0.012) 0 1px, transparent 1px 3px);
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+
+    .wrap {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: max(env(safe-area-inset-top), 18px) 18px calc(env(safe-area-inset-bottom) + 28px);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Dossier header ------------------------------------------------- */
+    .masthead {
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      background: var(--paper-2);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+      box-shadow: 0 1px 0 var(--paper-edge);
+    }
+    .masthead .file-no {
+      font-family: var(--font-stamp);
+      font-size: var(--step--1);
+      letter-spacing: 0.06em;
+      color: var(--ink-soft);
+      line-height: 1.2;
+    }
+    .masthead .title {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: var(--step-1);
+      letter-spacing: -0.01em;
+      line-height: 1;
+      margin: 2px 0 0;
+    }
+    .masthead .albatross {
+      font-size: 1.6rem;
+      line-height: 1;
+      filter: grayscale(0.2);
+    }
+    .clsf {
+      margin-left: auto;
+      font-family: var(--font-stamp);
+      font-size: 0.62rem;
+      letter-spacing: 0.14em;
+      border: 1.5px solid var(--red);
+      color: var(--red);
+      padding: 3px 6px;
+      border-radius: 3px;
+      transform: rotate(3deg);
+      white-space: nowrap;
+    }
+
+    /* ---- Stage / card --------------------------------------------------- */
+    .stage {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 24px 0;
+    }
+    .card {
+      background: var(--paper-2);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 12px 30px -18px var(--shadow), 0 2px 0 var(--paper-edge);
+      padding: 24px 20px;
+      position: relative;
+    }
+    .card::before {
+      /* punched-hole binder margin */
+      content: "";
+      position: absolute;
+      left: 14px; top: 22px; bottom: 22px;
+      width: 0;
+      border-left: 1px dashed var(--rule);
+    }
+    @media (max-width: 480px) { .card::before { display: none; } }
+
+    /* Section labels in stamp font */
+    .kicker {
+      font-family: var(--font-stamp);
+      font-size: var(--step--1);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--red);
+      margin: 0 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .kicker::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: repeating-linear-gradient(90deg, var(--rule) 0 6px, transparent 6px 10px);
+    }
+
+    h1.lede {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: var(--step-3);
+      line-height: 1.02;
+      letter-spacing: -0.02em;
+      margin: 0 0 10px;
+    }
+    p.dek {
+      color: var(--ink-soft);
+      margin: 0 0 22px;
+      font-size: var(--step-0);
+    }
+
+    /* ---- Form ----------------------------------------------------------- */
+    .field { margin-bottom: 16px; }
+    .field label {
+      display: block;
+      font-family: var(--font-stamp);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin-bottom: 6px;
+    }
+    .field input, .field select {
+      width: 100%;
+      min-height: var(--tap);
+      font-family: var(--font-body);
+      font-size: var(--step-0);
+      color: var(--ink);
+      background: var(--paper);
+      border: 1.5px solid var(--line);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    .field select {
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'><path d='M4 6l4 4 4-4' fill='none' stroke='%238a8168' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 40px;
+      cursor: pointer;
+    }
+    .field input:focus, .field select:focus {
+      outline: none;
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--red) 22%, transparent);
+    }
+    .field .err {
+      color: var(--red);
+      font-size: var(--step--1);
+      margin-top: 6px;
+      min-height: 1em;
+    }
+    .field.invalid input, .field.invalid select { border-color: var(--red); }
+
+    /* ---- Buttons -------------------------------------------------------- */
+    .btn {
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: var(--step-0);
+      min-height: var(--tap);
+      padding: 12px 22px;
+      border-radius: var(--radius);
+      border: 1.5px solid var(--ink);
+      background: var(--ink);
+      color: var(--paper-2);
+      cursor: pointer;
+      transition: transform 0.08s ease, box-shadow 0.15s, background 0.15s, opacity 0.15s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .btn:hover { box-shadow: 0 6px 16px -8px var(--shadow); }
+    .btn:active { transform: translateY(1px) scale(0.995); }
+    .btn:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+    .btn.primary { background: var(--red); border-color: var(--red); color: #fff; }
+    .btn.primary:hover { background: var(--red-deep); }
+    .btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+    .btn.ghost:hover { border-color: var(--ink-soft); }
+    .btn[disabled] { opacity: 0.45; cursor: not-allowed; box-shadow: none; transform: none; }
+    .btn.block { width: 100%; }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .btn-row .grow { flex: 1; }
+
+    /* ---- Progress + timer ---------------------------------------------- */
+    .hud {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+    .progress {
+      flex: 1;
+      height: 6px;
+      background: var(--line);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress > span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--red), var(--red-deep));
+      border-radius: 999px;
+      transition: width 0.4s cubic-bezier(.2,.8,.2,1);
+    }
+    .timer {
+      font-family: var(--font-stamp);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      color: var(--ink-soft);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 74px;
+      justify-content: flex-end;
+      font-variant-numeric: tabular-nums;
+    }
+    .timer .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--red);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:.35;} 50%{opacity:1;} }
+    .qcount {
+      font-family: var(--font-stamp);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      color: var(--ink-faint);
+      text-transform: uppercase;
+      margin: 14px 0 8px;
+    }
+
+    /* ---- Question ------------------------------------------------------- */
+    .qtext {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: var(--step-2);
+      line-height: 1.18;
+      letter-spacing: -0.01em;
+      margin: 0 0 6px;
+    }
+    .helper {
+      font-size: var(--step--1);
+      color: var(--ink-soft);
+      background: color-mix(in srgb, var(--red) 8%, transparent);
+      border-left: 3px solid var(--red);
+      padding: 8px 12px;
+      border-radius: 0 var(--radius) var(--radius) 0;
+      margin: 10px 0 4px;
+    }
+    .multi-note {
+      font-family: var(--font-stamp);
+      font-size: 0.68rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--red);
+      margin: 12px 0 0;
+    }
+
+    .options {
+      list-style: none;
+      margin: 16px 0 0;
+      padding: 0;
+      display: grid;
+      gap: 10px;
+    }
+    .opt {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      border: 1.5px solid var(--line);
+      background: var(--paper);
+      border-radius: var(--radius);
+      padding: 13px 14px;
+      cursor: pointer;
+      min-height: var(--tap);
+      transition: border-color 0.14s, background 0.14s, box-shadow 0.14s;
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+    }
+    .opt:hover { border-color: var(--ink-soft); }
+    .opt:focus-within { box-shadow: 0 0 0 3px color-mix(in srgb, var(--red) 22%, transparent); border-color: var(--red); }
+    .opt input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+    .opt .box {
+      flex: 0 0 auto;
+      width: 24px; height: 24px;
+      border: 2px solid var(--ink-faint);
+      display: grid;
+      place-items: center;
+      margin-top: 1px;
+      transition: border-color 0.14s, background 0.14s;
+      color: #fff;
+    }
+    .opt .box svg { width: 15px; height: 15px; opacity: 0; transform: scale(0.6); transition: opacity 0.14s, transform 0.14s; }
+    .opt.radio .box { border-radius: 50%; }
+    .opt.check .box { border-radius: 5px; }
+    .opt .label { font-size: var(--step-0); line-height: 1.35; }
+    .opt.selected {
+      border-color: var(--red);
+      background: color-mix(in srgb, var(--red) 9%, var(--paper));
+    }
+    .opt.selected .box { background: var(--red); border-color: var(--red); }
+    .opt.selected .box svg { opacity: 1; transform: scale(1); }
+
+    /* ---- Review summary ------------------------------------------------- */
+    .review-list { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 8px; }
+    .review-item {
+      display: flex; align-items: center; gap: 10px;
+      border: 1px solid var(--line); border-radius: var(--radius);
+      padding: 10px 12px; background: var(--paper);
+      font-size: var(--step--1);
+      text-align: left; width: 100%; cursor: pointer;
+      color: var(--ink); font-family: var(--font-body);
+    }
+    .review-item:hover { border-color: var(--ink-soft); }
+    .review-item .num {
+      font-family: var(--font-stamp); width: 30px; flex: 0 0 auto;
+      color: var(--ink-faint);
+    }
+    .review-item .state { margin-left: auto; font-family: var(--font-stamp); font-size: 0.7rem; letter-spacing: 0.05em; }
+    .review-item.done .state { color: var(--green); }
+    .review-item.todo .state { color: var(--red); }
+    .review-item.todo { border-color: color-mix(in srgb, var(--red) 40%, var(--line)); }
+
+    /* ---- Skeleton loader ------------------------------------------------ */
+    .sk { border-radius: var(--radius); background: var(--line); position: relative; overflow: hidden; }
+    .sk::after {
+      content: ""; position: absolute; inset: 0;
+      background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--paper-2) 70%, transparent), transparent);
+      transform: translateX(-100%);
+      animation: shimmer 1.3s infinite;
+    }
+    @keyframes shimmer { 100% { transform: translateX(100%); } }
+    .sk-line { height: 14px; margin: 10px 0; }
+
+    /* ---- Spinner -------------------------------------------------------- */
+    .spinner {
+      width: 20px; height: 20px; border-radius: 50%;
+      border: 2.5px solid color-mix(in srgb, #fff 45%, transparent);
+      border-top-color: #fff;
+      animation: spin 0.7s linear infinite;
+    }
+    .spinner.dark { border-color: color-mix(in srgb, var(--ink) 30%, transparent); border-top-color: var(--ink); }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    /* ---- Result --------------------------------------------------------- */
+    .score-wrap { text-align: center; padding: 8px 0 4px; }
+    .score-big {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: var(--step-4);
+      line-height: 0.9;
+      letter-spacing: -0.03em;
+      color: var(--red);
+    }
+    .score-big .of { color: var(--ink-faint); font-size: 0.42em; }
+    .result-meta {
+      display: flex; justify-content: center; gap: 22px; flex-wrap: wrap;
+      margin: 18px 0 4px;
+    }
+    .metric { text-align: center; }
+    .metric .v { font-family: var(--font-display); font-weight: 900; font-size: var(--step-2); line-height: 1; }
+    .metric .k {
+      font-family: var(--font-stamp); font-size: 0.66rem; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--ink-faint); margin-top: 4px;
+    }
+
+    /* CASE CLOSED / DECLASSIFIED stamp */
+    .stamp {
+      display: inline-block;
+      font-family: var(--font-stamp);
+      letter-spacing: 0.12em;
+      border: 3px double currentColor;
+      border-radius: 6px;
+      padding: 6px 14px;
+      transform: rotate(-7deg);
+      margin: 24px auto 6px;
+      color: var(--red);
+      opacity: 0;
+      font-size: var(--step-1);
+    }
+    .stamp.show { animation: stampin 0.5s cubic-bezier(.2,1.4,.3,1) forwards; }
+    @keyframes stampin {
+      0% { opacity: 0; transform: rotate(-7deg) scale(2.4); }
+      60% { opacity: 1; }
+      100% { opacity: 0.92; transform: rotate(-7deg) scale(1); }
+    }
+
+    /* ---- Error / already-submitted ------------------------------------- */
+    .notice-icon { font-size: 2.4rem; text-align: center; margin-bottom: 6px; }
+
+    /* ---- Transitions ---------------------------------------------------- */
+    .swap-enter { animation: swapin 0.32s cubic-bezier(.2,.8,.2,1); }
+    @keyframes swapin { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+    .swap-back { animation: swapback 0.32s cubic-bezier(.2,.8,.2,1); }
+    @keyframes swapback { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
+
+    /* ---- Confetti ------------------------------------------------------- */
+    #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 60; }
+
+    .footnote {
+      text-align: center;
+      font-size: var(--step--1);
+      color: var(--ink-faint);
+      margin-top: 18px;
+    }
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+    a { color: var(--red); }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="masthead">
+      <span class="albatross" aria-hidden="true">🕊️</span>
+      <div>
+        <div class="file-no">FILE No. 09-08-1965 · DEPT. ARCHIVES</div>
+        <div class="title">The Albatross Files</div>
+      </div>
+      <span class="clsf" aria-hidden="true">DECLASSIFIED</span>
+    </header>
+
+    <main class="stage" id="stage" aria-live="polite"></main>
+
+    <p class="footnote" aria-hidden="true">Road to Separation</p>
+  </div>
+
+  <canvas id="confetti" aria-hidden="true"></canvas>
+
+  <script>
+  /* =======================================================================
+     BACKEND BRIDGE
+     In Apps Script, google.script.run is defined and talks to Code.gs.
+     Locally (opening this file in a browser) it's undefined, so we fall back
+     to a MOCK for design iteration. The mock is NEVER used in production.
+     ==================================================================== */
+  var IS_APPS_SCRIPT = (typeof google !== 'undefined' && google.script && google.script.run);
+
+  var Backend = {
+    getQuizData: function () {
+      return new Promise(function (resolve, reject) {
+        if (IS_APPS_SCRIPT) {
+          google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).getQuizData();
+        } else {
+          MOCK.getQuizData(resolve);
+        }
+      });
+    },
+    submitQuiz: function (payload) {
+      return new Promise(function (resolve, reject) {
+        if (IS_APPS_SCRIPT) {
+          google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).submitQuiz(payload);
+        } else {
+          MOCK.submitQuiz(payload, resolve);
+        }
+      });
+    }
+  };
+
+  /* ---- MOCK harness (local preview only) ------------------------------- */
+  var MOCK = {
+    getQuizData: function (resolve) {
+      setTimeout(function () {
+        resolve({
+          clusters: ['Air Ops C3', 'Embedded Teams / C3 CentEx', 'HQ', 'Maritime Ops', 'Smart Camps & Bases', 'WOG Ops C3', 'NSI'],
+          total: 10,
+          questions: [
+            { index:0, multi:false, helper:'', q:'On what date did Singapore merge with Malaya, North Borneo (Sabah), and Sarawak to form the Federation of Malaysia?', options:['31 August 1963','16 September 1963','9 August 1965','21 September 1963'] },
+            { index:1, multi:false, helper:'', q:'Why did Goh Keng Swee name the secret file "Albatross"?', options:['A childhood nickname','It referenced Coleridge’s poem — Malaysia had become "an albatross round our necks"','A random British-intelligence codename','A bird species found in Singapore'] },
+            { index:2, multi:false, helper:'', q:'In the Singapore General Election of 21 September 1963, how many of the 51 seats did the PAP win?', options:['13','0','37','51'] },
+            { index:3, multi:false, helper:'', q:'Which PAP candidate won the only seat the party secured in the 1964 Malaysian Federal Election?', options:['Lim Kim San','Devan Nair','Ong Pang Boon','Toh Chin Chye'] },
+            { index:4, multi:false, helper:'', q:'How many people died in the first race riot of 21 July 1964?', options:['8','13','23','60'] },
+            { index:5, multi:false, helper:'', q:'What alliance did Lee Kuan Yew, Toh Chin Chye, and S. Rajaratnam form on 9 May 1965?', options:['The Singapore Alliance','The Malaysian Solidarity Convention (MSC)','The Democratic Action Party','Barisan Sosialis'] },
+            { index:6, multi:false, helper:'', q:'What health condition struck Tunku Abdul Rahman while in London in June 1965?', options:['Heart attack','Shingles','Pneumonia','Stroke'] },
+            { index:7, multi:true, pick:3, helper:'', q:'Which Singapore ministers were reluctant to sign the Separation Agreement? Select all that apply.', options:['Toh Chin Chye','S. Rajaratnam','Ong Pang Boon','Lim Kim San','E.W. Barker','Goh Keng Swee'] },
+            { index:8, multi:true, pick:2, helper:'Two conditions from Lee Kuan Yew’s briefing to Goh — select both for full credit.', q:'When Lee Kuan Yew instructed Goh Keng Swee to explore separation, he gave two specific instructions. Select both.', options:['Find a way to avoid a racial clash','Complete the review within one month','Restrict talks to the ‘minimum few’ and be absolutely leak-proof','Report only to the British High Commissioner','Draft a new constitution before informing Lee Kuan Yew','Hold a referendum in Singapore first'] },
+            { index:9, multi:true, pick:2, helper:'', q:'According to E.W. Barker, LKY’s 27 May 1965 speech was the moment Tunku Abdul Rahman and his colleagues realized two things. Select both.', options:['Time to bring in the British as mediator','Better to have Singapore out of the Federation','Better to have Mr Lee out of Malaysian politics','Time to hold fresh elections','Better to delay Separation until after 1969','Time to reshuffle the cabinet'] }
+          ]
+        });
+      }, 900);
+    },
+    submitQuiz: function (payload, resolve) {
+      setTimeout(function () {
+        // Fake a score by counting answered questions; deterministic enough for UI work.
+        var score = 0;
+        (payload.answers || []).forEach(function (a) { if (a && a.length) score++; });
+        score = Math.min(10, score);
+        // Toggle this to preview the "already submitted" state locally:
+        if (String(payload.name).toLowerCase() === 'dupe') { resolve({ ok:false, alreadySubmitted:true }); return; }
+        resolve({ ok:true, score:score, total:10, timeSec: Math.round((payload.timeMs||0)/100)/10, rank: 2, totalPlayers: 27 });
+      }, 1100);
+    }
+  };
+
+  /* =======================================================================
+     STATE
+     ==================================================================== */
+  var App = {
+    data: null,           // quiz data from server
+    player: { name:'', number:'', cluster:'' },
+    answers: [],          // answers[i] = array of selected indices
+    current: 0,           // current question index
+    startTime: 0,         // ms timestamp when Q1 began
+    timerId: null,
+    reduceMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  };
+
+  var stage = document.getElementById('stage');
+
+  /* small DOM helper */
+  function el(tag, attrs, children) {
+    var e = document.createElement(tag);
+    if (attrs) for (var k in attrs) {
+      if (k === 'class') e.className = attrs[k];
+      else if (k === 'html') e.innerHTML = attrs[k];
+      else if (k === 'text') e.textContent = attrs[k];
+      else if (k.slice(0,2) === 'on') e.addEventListener(k.slice(2).toLowerCase(), attrs[k]);
+      else if (attrs[k] != null) e.setAttribute(k, attrs[k]);
+    }
+    (children || []).forEach(function (c) {
+      if (c == null) return;
+      e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+    });
+    return e;
+  }
+
+  function render(node, dir) {
+    stage.innerHTML = '';
+    if (!App.reduceMotion) node.classList.add(dir === 'back' ? 'swap-back' : 'swap-enter');
+    stage.appendChild(node);
+  }
+
+  var CHECK_SVG = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10l4 4 8-9" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var DOT_SVG = '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="5" fill="currentColor"/></svg>';
+
+  /* =======================================================================
+     SCREENS
+     ==================================================================== */
+
+  /* ---- Loading skeleton ------------------------------------------------ */
+  function screenLoading() {
+    var card = el('div', { class:'card' }, [
+      el('p', { class:'kicker', text:'Opening the file' }),
+      el('div', { class:'sk sk-line', style:'width:70%;height:34px;' }),
+      el('div', { class:'sk sk-line', style:'width:95%;' }),
+      el('div', { class:'sk sk-line', style:'width:88%;' }),
+      el('div', { class:'sk sk-line', style:'width:40%;margin-top:22px;height:44px;' })
+    ]);
+    render(card);
+  }
+
+  /* ---- Start ----------------------------------------------------------- */
+  function screenStart() {
+    stopTimer();
+    var clusterOpts = [el('option', { value:'', text:'Select your cluster…', disabled:'', selected:'' })]
+      .concat(App.data.clusters.map(function (c) { return el('option', { value:c, text:c }); }));
+
+    var nameField = field('name', 'Name', el('input', {
+      id:'f-name', type:'text', autocomplete:'name', value: App.player.name,
+      'aria-describedby':'e-name', maxlength:'60'
+    }), 'e-name');
+
+    var numField = field('number', 'Phone number', el('input', {
+      id:'f-number', type:'tel', inputmode:'tel', autocomplete:'tel',
+      value: App.player.number, 'aria-describedby':'e-number', maxlength:'30',
+      placeholder:'e.g. 9123 4567'
+    }), 'e-number');
+
+    var clusterField = field('cluster', 'Cluster', el('select', {
+      id:'f-cluster', 'aria-describedby':'e-cluster'
+    }, clusterOpts), 'e-cluster');
+    if (App.player.cluster) clusterField.querySelector('select').value = App.player.cluster;
+
+    var startBtn = el('button', { class:'btn primary block', id:'start-btn', type:'submit' }, ['Begin the investigation →']);
+
+    var form = el('form', { novalidate:'', onsubmit: function (ev) {
+      ev.preventDefault();
+      if (validateStart()) beginQuiz();
+    }}, [ nameField, numField, clusterField, el('div', { class:'btn-row' }, [ startBtn ]) ]);
+
+    var card = el('div', { class:'card' }, [
+      el('p', { class:'kicker', text:'Personnel intake' }),
+      el('h1', { class:'lede', text:'Read the file. Understand the history. Ace the quiz.' }),
+      el('p', { class:'dek', text:'Ten questions on Singapore’s road to Separation.' }),
+      form
+    ]);
+    render(card);
+    setTimeout(function(){ var n = document.getElementById('f-name'); if (n) n.focus(); }, 50);
+  }
+
+  function field(key, labelText, inputNode, errId) {
+    return el('div', { class:'field', 'data-field':key }, [
+      el('label', { for:'f-'+key, text:labelText }),
+      inputNode,
+      el('div', { class:'err', id:errId, role:'alert' })
+    ]);
+  }
+
+  function validateStart() {
+    var ok = true;
+    var name = document.getElementById('f-name').value.trim();
+    var number = document.getElementById('f-number').value.trim();
+    var cluster = document.getElementById('f-cluster').value;
+
+    ok = setFieldError('name', name ? '' : 'Please enter your name.') && ok;
+    ok = setFieldError('number', number ? '' : 'Please enter your phone number.') && ok;
+    ok = setFieldError('cluster', cluster ? '' : 'Please choose your cluster.') && ok;
+
+    if (ok) { App.player = { name:name, number:number, cluster:cluster }; }
+    return ok;
+  }
+
+  function setFieldError(key, msg) {
+    var wrap = document.querySelector('[data-field="'+key+'"]');
+    if (!wrap) return true;
+    wrap.classList.toggle('invalid', !!msg);
+    wrap.querySelector('.err').textContent = msg;
+    return !msg;
+  }
+
+  /* ---- Quiz ------------------------------------------------------------ */
+  function beginQuiz() {
+    App.answers = App.data.questions.map(function () { return []; });
+    App.current = 0;
+    App.startTime = Date.now();
+    startTimer();
+    screenQuestion('enter');
+  }
+
+  function screenQuestion(dir) {
+    var q = App.data.questions[App.current];
+    var total = App.data.total;
+    var selected = App.answers[App.current] || [];
+
+    // HUD: progress only (the timer is measured but never shown to players)
+    var bar = el('div', { class:'progress' }, [ el('span', { style:'width:'+(((App.current)/total)*100)+'%' }) ]);
+    var hud = el('div', { class:'hud' }, [ bar ]);
+
+    var qcount = el('p', { class:'qcount', text:'Question ' + (App.current+1) + ' of ' + total });
+    var qtext = el('h2', { class:'qtext', text:q.q });
+
+    var kids = [ hud, qcount, qtext ];
+    if (q.helper) kids.push(el('p', { class:'helper', text:q.helper }));
+    if (q.multi) {
+      var pick = q.pick || 2;
+      kids.push(el('p', { class:'multi-note' }, [
+        el('span', { text:'▸ Select ' + pick + ' option' + (pick === 1 ? '' : 's') + ' · you must get all of them right for the mark' }),
+        el('span', { id:'pick-hint', style:'display:block;margin-top:4px;opacity:.85;',
+          text: remainingHint(App.current) })
+      ]));
+    }
+
+    // Options as a proper radio/checkbox group
+    var groupRole = q.multi ? 'group' : 'radiogroup';
+    var list = el('ul', { class:'options', role:groupRole, 'aria-label':'Answer options' });
+    q.options.forEach(function (optText, i) {
+      var isSel = selected.indexOf(i) !== -1;
+      var input = el('input', {
+        type: q.multi ? 'checkbox' : 'radio',
+        name: 'q'+App.current,
+        value: i,
+        checked: isSel ? '' : null,
+        'aria-label': optText
+      });
+      var li = el('li', { class:'opt ' + (q.multi?'check':'radio') + (isSel?' selected':''), role:'presentation' }, [
+        el('label', { class:'opt-inner', style:'display:flex;gap:12px;align-items:flex-start;width:100%;cursor:pointer;' }, [
+          input,
+          el('span', { class:'box', html: q.multi ? CHECK_SVG : DOT_SVG }),
+          el('span', { class:'label', text: optText })
+        ])
+      ]);
+      input.addEventListener('change', function () { toggleOption(i, q.multi); });
+      list.appendChild(li);
+    });
+
+    // Nav
+    var backBtn = el('button', { class:'btn ghost', type:'button', onclick: goBack }, ['← Back']);
+    if (App.current === 0) backBtn.setAttribute('disabled','');
+    var isLast = App.current === total - 1;
+    var nextBtn = el('button', { class:'btn primary grow', id:'next-btn', type:'button', onclick: goNext },
+      [ isLast ? 'Review answers →' : 'Next →' ]);
+    // Every question must be attempted before moving on. Multi-select is
+    // full-credit-only, so require exactly the number of picks asked for —
+    // otherwise people submit a partial answer and silently score zero.
+    if (!isAnswerComplete(App.current)) nextBtn.setAttribute('disabled', '');
+
+    var row = el('div', { class:'btn-row' }, [ backBtn, nextBtn ]);
+
+    var card = el('div', { class:'card' }, kids.concat([ list, row ]));
+    render(card, dir);
+    // animate progress to include a hint of current
+    requestAnimationFrame(function(){
+      var fill = bar.querySelector('span');
+      if (fill) fill.style.width = (((App.current+0.5)/total)*100) + '%';
+    });
+  }
+
+  function toggleOption(i, multi) {
+    var sel = App.answers[App.current];
+    if (multi) {
+      var at = sel.indexOf(i);
+      if (at === -1) sel.push(i); else sel.splice(at, 1);
+    } else {
+      App.answers[App.current] = [i];
+    }
+    // Re-sync visual selected states without a full re-render (no layout shift).
+    var opts = stage.querySelectorAll('.opt');
+    var cur = App.answers[App.current];
+    opts.forEach(function (li, idx) {
+      var on = cur.indexOf(idx) !== -1;
+      li.classList.toggle('selected', on);
+      var input = li.querySelector('input');
+      if (input) input.checked = on;
+    });
+    // Enable "Next" once the question is completely answered.
+    var nextBtn = document.getElementById('next-btn');
+    if (nextBtn) {
+      if (isAnswerComplete(App.current)) nextBtn.removeAttribute('disabled');
+      else nextBtn.setAttribute('disabled', '');
+    }
+    var hint = document.getElementById('pick-hint');
+    if (hint) hint.textContent = remainingHint(App.current);
+  }
+
+  /**
+   * A question counts as answered only when it is fully answered: one option
+   * for a single-answer question, and exactly `pick` options for a
+   * multi-select (which is scored full-credit-only).
+   */
+  function isAnswerComplete(i) {
+    var q = App.data.questions[i];
+    var sel = App.answers[i] || [];
+    if (!q) return false;
+    if (!q.multi) return sel.length >= 1;
+    return sel.length === (q.pick || 2);
+  }
+
+  /** Live "n more to pick" nudge under a multi-select question. */
+  function remainingHint(i) {
+    var q = App.data.questions[i];
+    var sel = App.answers[i] || [];
+    if (!q || !q.multi) return '';
+    var need = q.pick || 2;
+    if (sel.length === need) return 'Ready — ' + need + ' selected.';
+    if (sel.length > need) return 'Too many — remove ' + (sel.length - need) + '.';
+    return 'Select ' + (need - sel.length) + ' more.';
+  }
+
+  function goNext() {
+    if (App.current < App.data.total - 1) {
+      App.current++;
+      screenQuestion('enter');
+    } else {
+      screenReview();
+    }
+  }
+  function goBack() {
+    if (App.current > 0) { App.current--; screenQuestion('back'); }
+  }
+
+  /* ---- Review before submit ------------------------------------------- */
+  function screenReview() {
+    var total = App.data.total;
+    var answered = App.data.questions.filter(function (q, i) { return isAnswerComplete(i); }).length;
+    var allDone = answered === total;
+
+    var items = App.data.questions.map(function (q, i) {
+      var done = isAnswerComplete(i);
+      return el('button', {
+        class:'review-item ' + (done?'done':'todo'), type:'button',
+        onclick: (function(idx){ return function(){ App.current = idx; screenQuestion('enter'); }; })(i)
+      }, [
+        el('span', { class:'num', text:'Q'+(i+1) }),
+        el('span', { class:'rq', text: q.q.length > 46 ? q.q.slice(0,46)+'…' : q.q }),
+        el('span', { class:'state', text: done ? 'ANSWERED' : 'MISSING' })
+      ]);
+    });
+
+    var submitBtn = el('button', { class:'btn primary grow', id:'submit-btn', type:'button', onclick: doSubmit },
+      [ allDone ? 'Submit & close the case' : (total - answered) + ' left to answer' ]);
+    if (!allDone) submitBtn.setAttribute('disabled','');
+
+    var backBtn = el('button', { class:'btn ghost', type:'button', onclick: function(){ App.current = total-1; screenQuestion('back'); } }, ['← Back']);
+
+    var card = el('div', { class:'card' }, [
+      el('div', { class:'hud' }, [ el('div',{class:'progress'},[el('span',{style:'width:'+((answered/total)*100)+'%'})]) ]),
+      el('p', { class:'kicker', text:'Final review' }),
+      el('h2', { class:'qtext', style:'font-size:var(--step-1);', text: allDone ? 'All ten answered. Ready to file?' : 'Some questions still need an answer.' }),
+      el('p', { class:'dek', style:'margin:8px 0 0;font-size:var(--step--1);', text:'Tap any question to revisit it.' }),
+      el('div', { class:'review-list', role:'list' }, items),
+      el('div', { class:'btn-row' }, [ backBtn, submitBtn ])
+    ]);
+    render(card, 'enter');
+  }
+
+  /* ---- Submitting ------------------------------------------------------ */
+  function screenSubmitting() {
+    var card = el('div', { class:'card', style:'text-align:center;padding:44px 20px;' }, [
+      el('p', { class:'kicker', style:'justify-content:center;', text:'Filing your report' }),
+      el('div', { style:'display:flex;justify-content:center;margin:18px 0 14px;' }, [ el('div',{class:'spinner dark'}) ]),
+      el('p', { class:'dek', style:'margin:0;', text:'Filing your submission…' })
+    ]);
+    render(card);
+  }
+
+  function doSubmit() {
+    stopTimer();
+    var elapsed = Date.now() - App.startTime;
+    var btn = document.getElementById('submit-btn');
+    if (btn) btn.setAttribute('disabled','');
+    screenSubmitting();
+
+    Backend.submitQuiz({
+      name: App.player.name,
+      number: App.player.number,
+      cluster: App.player.cluster,
+      answers: App.answers,
+      timeMs: elapsed
+    }).then(function (res) {
+      if (!res) { screenError('The server did not respond.'); return; }
+      if (res.alreadySubmitted) { screenAlready(); return; }
+      if (!res.ok) { screenError(res.error || 'We couldn’t save your result.'); return; }
+      screenResult(res);
+    }).catch(function (err) {
+      screenError((err && err.message) ? err.message : 'A network error interrupted your submission.');
+    });
+  }
+
+  /* ---- Result (simple thank-you — no score/time shown to players) ------ */
+  function screenResult(res) {
+    var stamp = el('div', { class:'stamp', id:'stamp' }, [ 'CASE CLOSED' ]);
+    var card = el('div', { class:'card', style:'text-align:center;padding:36px 22px;' }, [
+      el('div', { class:'notice-icon', 'aria-hidden':'true', text:'🗂️' }),
+      el('p', { class:'kicker', style:'justify-content:center;', text:'Submission received' }),
+      el('h2', { class:'qtext', style:'font-size:var(--step-2);margin:6px auto 0;max-width:22ch;',
+        text:'Thank you for your submission, the file is in order.' }),
+      stamp
+    ]);
+    render(card);
+    setTimeout(function(){ stamp.classList.add('show'); }, App.reduceMotion ? 0 : 400);
+  }
+
+  function metric(value, key) {
+    return el('div', { class:'metric' }, [ el('div',{class:'v',text:value}), el('div',{class:'k',text:key}) ]);
+  }
+
+  function animateCount(node, target) {
+    if (App.reduceMotion || target === 0) { node.textContent = String(target); return; }
+    var start = performance.now(), dur = 900;
+    function step(now) {
+      var t = Math.min(1, (now - start) / dur);
+      var eased = 1 - Math.pow(1 - t, 3);
+      node.textContent = String(Math.round(eased * target));
+      if (t < 1) requestAnimationFrame(step);
+      else node.textContent = String(target);
+    }
+    requestAnimationFrame(step);
+  }
+
+  /* ---- Already submitted ---------------------------------------------- */
+  function screenAlready() {
+    var card = el('div', { class:'card', style:'text-align:center;' }, [
+      el('div', { class:'notice-icon', 'aria-hidden':'true', text:'🗄️' }),
+      el('p', { class:'kicker', style:'justify-content:center;', text:'Entry already on file' }),
+      el('h2', { class:'qtext', style:'font-size:var(--step-1);', text:'You’ve already filed this one.' }),
+      el('p', { class:'dek', style:'margin:12px auto 0;max-width:34ch;',
+        text:'Our records show a submission under your name and number. It’s one attempt per person — your original result stands.' })
+    ]);
+    render(card);
+  }
+
+  /* ---- Error ----------------------------------------------------------- */
+  function screenError(message) {
+    var card = el('div', { class:'card', style:'text-align:center;' }, [
+      el('div', { class:'notice-icon', 'aria-hidden':'true', text:'⚠️' }),
+      el('p', { class:'kicker', style:'justify-content:center;color:var(--red);', text:'Transmission error' }),
+      el('h2', { class:'qtext', style:'font-size:var(--step-1);', text:'That didn’t go through.' }),
+      el('p', { class:'dek', style:'margin:12px auto 18px;max-width:36ch;', text: message }),
+      el('div', { class:'btn-row', style:'justify-content:center;' }, [
+        el('button', { class:'btn primary', type:'button', onclick: function(){ screenReview(); } }, ['Try again'])
+      ])
+    ]);
+    render(card);
+  }
+
+  /* =======================================================================
+     TIMER
+     ==================================================================== */
+  function startTimer() {
+    stopTimer();
+    App.timerId = setInterval(tick, 100);
+    tick();
+  }
+  function stopTimer() { if (App.timerId) { clearInterval(App.timerId); App.timerId = null; } }
+  function tick() {
+    var v = document.getElementById('timer-val');
+    if (v) v.textContent = fmtTime(Date.now() - App.startTime);
+  }
+  function fmtTime(ms) {
+    var s = ms / 1000;
+    if (s < 60) return s.toFixed(1) + 's';
+    var m = Math.floor(s / 60);
+    var rem = Math.floor(s % 60);
+    return m + ':' + (rem < 10 ? '0' : '') + rem;
+  }
+
+  /* =======================================================================
+     CONFETTI (perfect score only; skipped for reduced motion)
+     ==================================================================== */
+  function fireConfetti() {
+    var canvas = document.getElementById('confetti');
+    var ctx = canvas.getContext('2d');
+    var W = canvas.width = window.innerWidth;
+    var H = canvas.height = window.innerHeight;
+    var colors = ['#b3121f', '#23201a', '#e6dabc', '#8a0d17', '#faf5e6'];
+    var pieces = [];
+    for (var i = 0; i < 130; i++) {
+      pieces.push({
+        x: Math.random()*W, y: -20 - Math.random()*H*0.4,
+        r: 4 + Math.random()*6,
+        c: colors[i % colors.length],
+        vy: 2 + Math.random()*3.5,
+        vx: -1.5 + Math.random()*3,
+        rot: Math.random()*6.28, vr: -0.2 + Math.random()*0.4
+      });
+    }
+    var start = performance.now();
+    (function frame(now) {
+      var t = now - start;
+      ctx.clearRect(0,0,W,H);
+      pieces.forEach(function (p) {
+        p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+        ctx.save();
+        ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+        ctx.fillStyle = p.c;
+        ctx.globalAlpha = Math.max(0, 1 - t/3600);
+        ctx.fillRect(-p.r/2, -p.r/2, p.r, p.r*0.6);
+        ctx.restore();
+      });
+      if (t < 3600) requestAnimationFrame(frame);
+      else ctx.clearRect(0,0,W,H);
+    })(start);
+  }
+
+  /* =======================================================================
+     BOOT
+     ==================================================================== */
+  function boot() {
+    screenLoading();
+    Backend.getQuizData().then(function (data) {
+      App.data = data;
+      App.answers = data.questions.map(function () { return []; });
+      screenStart();
+    }).catch(function (err) {
+      screenError('We couldn’t open the case file. Please refresh to try again.');
+    });
+  }
+
+  boot();
+  </script>
+</body>
+</html>

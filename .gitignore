@@ -1,9 +1,8 @@
-# Local dev only — not needed at runtime in Apps Script
+# Dependencies (installed by the host at build time)
 node_modules/
-package.json
 package-lock.json
 
-# clasp
+# clasp (Apps Script local workflow)
 .clasp.json
 .clasprc.json
 

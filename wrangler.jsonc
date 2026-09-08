@@ -1,0 +1,43 @@
+{
+  // The Albatross Files — Cloudflare Worker configuration.
+  //
+  // HOST_KEY is set here because adding it as a dashboard secret did not stick.
+  // Note the trade-off: this repository is public, so anyone who finds it can
+  // read the scoreboard key. The board exposes names, clusters, scores and
+  // times only — never phone numbers. To take it back out of the repo, set
+  // HOST_KEY as a Worker secret in the dashboard and delete it from "vars".
+  //
+  // Telegram values are deliberately NOT put here — a bot token is a real
+  // secret and belongs in the dashboard.
+
+  "name": "quiz",
+  "main": "src/index.js",
+  "compatibility_date": "2025-03-01",
+
+  // Gates the host scoreboard at /board.html?key=...
+  "vars": {
+    "HOST_KEY": "trainingteam2026"
+  },
+
+  // Serves public/index.html and public/board.html. Only this folder is
+  // published; shared/ (which holds the answer key) is bundled into the
+  // Worker instead, never exposed as a file.
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+
+  // Cloudflare D1. The database id is not a secret — it only names which
+  // database in this account to use; access still requires account auth.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "albatross",
+      "database_id": "40d2a28f-f67c-44de-98d0-c46317a3ce22"
+    }
+  ],
+
+  "observability": {
+    "enabled": true
+  }
+}
